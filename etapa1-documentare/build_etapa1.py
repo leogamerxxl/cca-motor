@@ -63,64 +63,72 @@ for c, h in enumerate(headers, 1):
 rows = [
     ("Mercedes-AMG", "Concept AMG GT XX", "Concept (06/2025)", 360, 1000, "n.d.", "n.d.",
      "3 motoare sincrone cu flux axial (YASA): 2 pe puntea spate + 1 pe puntea față, integrate în 2 unități HP.EDU (motor + reductor + invertor)",
-     "Spate: câte un reductor planetar pentru fiecare motor; față: reductor cu roți dințate cilindrice",
+     "Spate: câte un set planetar compact pentru fiecare motor (o carcasă comună); față: reductor cu roți dințate cilindrice + unitate de decuplare (DCU)",
      "≈114", ">800", "n.d.", "n.d.", 0.198, "O / S",
-     "Valori declarate pentru concept (simulări / prototipuri): v_max >360 km/h, P >1000 kW, încărcare DC >850 kW. "
-     "Record Nardò 08/2025: 40 075 km în 7 zile 13 h 24 min. Capacitatea bateriei (≈114 kWh) provine din presă."),
-    ("Mercedes-AMG", "GT 63 4MATIC+ 4-Door Coupé (AMG.EA)", "Serie (prezentat 05/2026)", 300, 860, 2000, 2.1,
-     "3 motoare sincrone cu flux axial (fabricate la Berlin-Marienfelde): 2 spate + 1 față, în unități HP.EDU",
-     "Spate: câte un reductor planetar de intrare pentru fiecare motor (o singură carcasă)",
-     "106 (util)", 800, "≈2460–2535", "≈18", 0.22, "O / S",
-     "Versiunea de serie derivată din GT XX. 860 kW = putere de vârf cu AMG Launch Control; v_max 300 km/h cu Driver's Package; "
-     "2660 celule cilindrice răcite direct în ulei; încărcare DC 600 kW. Varianta GT 55: 600 kW, autonomie WLTP 700 km. "
-     "Masa și consumul diferă între surse (2460 / 2535 kg; 17,9 / 18,2 kWh/100 km)."),
+     "Valori declarate pentru concept: v_max >360 km/h, P >1000 kW, încărcare DC >850 kW (medie), Cx 0,198, arie frontală 2,24 m², "
+     ">3000 celule cilindrice NCMA. Record Nardò 08/2025: 5479 km în 24 h; 40 075 km în 7 zile 13 h 24 min. "
+     "Mercedes nu publică capacitatea bateriei și cuplul conceptului – ≈114 kWh provine din presă (S)."),
+    ("Mercedes-AMG", "GT 63 4MATIC+ 4-Door Coupé (AMG.EA)", "Serie (prezentat 05/2026)", 300, 860, 2000, 2.4,
+     "3 motoare sincrone cu flux axial (YASA, fabricate la Berlin-Marienfelde): 2 spate + 1 față, în unități HP.EDU; 3 invertoare SiC",
+     "Spate: reductor planetar cu o treaptă, carcasă comună pentru cele 2 motoare; față: reductor cu roți dințate cilindrice + unitate de decuplare (DCU)",
+     "106 (net)", 800, 2460, "17,9–21,0", 0.22, "O",
+     "860 kW = putere de vârf cu AMG Launch Control la 80 % SoC; putere continuă 530 kW; boost 63 s. 0–100 km/h: 2,4 s "
+     "(2,1 s cu „1-foot rollout”); 0–200 km/h: 6,8 s (6,4 s). v_max 300 km/h cu Driver's Package. Masa = DIN (fără șofer); "
+     "≈2535 kg în varianta UE cu șofer de 75 kg. Arie frontală 2,44 m². 2660 celule cilindrice NCMA răcite direct în ulei; DC 600 kW. "
+     "WLTP 596–696 km. GT 55: 600 kW (continuu 375 kW), 1800 Nm, 2,8 s (2,5 s rollout), 2460 kg, 17,8–21,0 kWh/100 km, WLTP 597–700 km."),
     ("Porsche", "Taycan Turbo GT (pachet Weissach)", "Serie (2024)", 305, 760, 1240, 2.2,
      "2 motoare sincrone cu magneți permanenți (PSM): 1 față + 1 spate; invertor spate cu SiC, 900 A",
      "Față: o treaptă; spate: cutie de viteze cu 2 trepte",
-     "97 net / 105 brut", 800, 2220, "20,5–21,2", "n.d.", "O",
+     "97 net / 105 brut", 800, 2220, "20,6–21,3", 0.31, "O",
      "580 kW putere maximă; 760 kW overboost cu Launch Control (815 kW timp de 2 s); Attack Mode +120 kW / 10 s. "
-     "Consumul WLTP este cel publicat pentru Taycan Turbo GT."),
+     "Date pentru pachetul Weissach (fișa tehnică UE 03/2024): masă DIN, arie frontală 2,35 m², anvelope 265/35 ZR21 / 305/30 ZR21."),
     ("Audi", "RS e-tron GT performance", "Serie (2024)", 250, 680, 1027, 2.5,
      "2 motoare sincrone cu magneți permanenți: 1 față + 1 spate",
      "Față: o treaptă; spate: cutie de viteze cu 2 trepte",
-     "97 net / 105 brut", 800, "n.d.", "18,7–20,8", "n.d.", "O",
-     "550 kW nominal / 680 kW cu Launch Control; push-to-pass +70 kW / 10 s. "
-     "Putere continuă declarată: 163 kW – singurul producător din tabel care o publică (date nominale)."),
+     "97 net / 105 brut", 800, 2320, "18,7–20,8", 0.26, "O",
+     "550 kW nominal / 680 kW cu Launch Control; push-to-pass +70 kW / 10 s. Cuplu motoare față / spate: 409 / 590 Nm. "
+     "Putere continuă declarată: 163 kW. Masa = fără șofer (2395 kg cu șofer); arie frontală 2,35 m²."),
     ("Lotus", "Emeya R", "Serie (2024)", 256, 675, 985, 2.78,
      "2 motoare electrice: 1 față + 1 spate (tracțiune integrală)",
-     "Spate: cutie cu 2 trepte (de verificat)",
-     "102", 800, 2565, "≈18,7", "n.d.", "S",
-     "Încărcare DC 400 kW; autonomie WLTP ≈535 km."),
+     "Față: o treaptă; spate: cutie cu 2 trepte (doar la versiunea 900 Sport Carbon; 900 Sport are o treaptă și spate)",
+     "102 (brut)", "705 (nominal)", 2565, "17,7–22,4 (gama Emeya)", "n.d.", "O / S",
+     "Putere, cuplu, v_max, 0–100, baterie, tensiune nominală (705 V; „arhitectură 800 V” în marketing), transmisie și autonomia "
+     "WLTP 435–485 km sunt din fișa de presă Lotus. Masa (S) nu este publicată de Lotus; consumul oficial este dat doar pentru toată gama."),
     ("Tesla", "Model S Plaid", "Serie (2021)", 322, 760, 1420, 2.1,
      "3 motoare sincrone cu magneți permanenți: 1 față + 2 spate (câte unul pe roată)",
      "Reductor cu o treaptă pentru fiecare unitate de acționare",
-     "≈96 (util)", "≈400", 2178, "≈15,7", "n.d.", "S",
+     "≈96 (util)", "≈400", 2178, "≈15,7", 0.208, "S",
      "322 km/h cu Track Package; arhitectură de 400 V (singura din tabel); încărcare DC 250 kW; autonomie WLTP ≈611 km."),
-    ("Lucid", "Air Sapphire", "Serie (2023)", 330, 920, 1939, "1,89 (0–96 km/h)",
+    ("Lucid", "Air Sapphire", "Serie (2023)", 330, 908, 1940, "1,89 (0–96 km/h)",
      "3 motoare sincrone cu magneți permanenți: 1 față + 2 spate",
-     "n.d.",
+     "O treaptă: raport 7:1 (față), 6,8:1 (spate)",
      "118", "900+", 2420, "≈17,2 (EPA)", "n.d.", "O",
-     "Putere declarată 1234 CP (≈920 kW); cuplu 1430 lb-ft (≈1939 Nm); masă 5336 lb. Consumul este calculat din eficiența EPA de 3,61 mi/kWh (nu WLTP)."),
+     "Fișa tehnică 2024: 1234 hp (908 kW), 1430 lb-ft (1940 Nm), v_max 205 mph, masă 5336 lb. Anvelope 265/35R20 / 295/30R21. "
+     "Consumul este calculat din eficiența EPA de 3,61 mi/kWh (nu WLTP)."),
     ("Xiaomi", "SU7 Ultra", "Serie (2025)", 350, 1138, 1770, 1.98,
      "3 motoare: 2 × HyperEngine V8s (425 kW, 635 Nm, 27 200 rpm) + 1 × V6s (288 kW)",
-     "n.d.",
-     "93,7 net / 95 brut", 897, 2360, "n.d.", "n.d.", "S",
-     "Baterie CATL Qilin 2.0 (putere maximă de descărcare 1330 kW)."),
+     "Reductor cu o treaptă pentru fiecare motor",
+     "93,7 net / 95 brut", 897, 2360, "≈16,5 (CLTC)", "n.d.", "S",
+     "Baterie CATL Qilin 2.0 (putere maximă de descărcare 1330 kW). Consumul este pe ciclul chinezesc CLTC (nu WLTP); "
+     "Cx-ul versiunii Ultra (cu eleron) nu este publicat (0,195 este valoarea SU7 standard)."),
     ("BYD (Yangwang)", "U9", "Serie (2024)", 309, 960, 1680, 2.36,
      "4 motoare × 240 kW, câte unul pe fiecare roată (platforma e4)",
      "n.d.",
-     "80 (LFP Blade)", 800, 2475, "n.d.", "n.d.", "S",
-     "v_max = 309,19 km/h. Varianta U9 Track Edition / Xtreme: 1200 V, >2200 kW, 496,22 km/h (09/2025, record într-un singur sens)."),
-    ("Rimac", "Nevera", "Serie (2021, 150 ex.)", 412, 1408, 2360, 1.81,
+     "80 (LFP Blade)", 800, 2475, "n.d.", "n.d.", "O / S",
+     "Comunicat BYD: ≈1300 CP, 1680 Nm, 309,19 km/h, 0–100 km/h 2,36 s, 4 motoare independente (O); masa, tensiunea și bateria sunt din surse secundare. Varianta U9 Track Edition / Xtreme: 1200 V, >2200 kW, 496,22 km/h (09/2025, record într-un singur sens)."),
+    ("Rimac", "Nevera", "Serie (2021, 150 ex.)", 412, 1408, 2340, 1.81,
      "4 motoare sincrone cu magneți permanenți (rotor cu manșon din carbon): față 2 × 220 kW / 280 Nm, spate 2 × 480 kW / 900 Nm; 4 invertoare",
-     "4 reductoare independente (câte unul pe motor)",
-     "120", "730 (max.)", 2300, "n.d.", "n.d.", "O",
-     "6960 celule cilindrice 21700; încărcare DC 500 kW; autonomie ≈490 km. Cuplul la roată declarat: 13 430 Nm."),
+     "Față: 2 reductoare cu o treaptă (la capetele punții); spate: reductor dublu cu o treaptă (2 reductoare într-o carcasă)",
+     "120", "730 (max.)", 2300, "30,0 (WLTP)", 0.30, "O",
+     "6960 celule cilindrice 21700; încărcare DC 500 kW; autonomie WLTP 490 km. Cuplu la motoare 2340 Nm, la roți 13 430 Nm. "
+     "0–100 km/h cu „1-foot rollout”. Cx 0,30 în modul low-drag. Pagina web Rimac indică 226 / 450 kW pe motor (fișa PDF: 220 / 480 kW)."),
     ("Maserati", "GranTurismo Folgore", "Serie (2023)", 325, 560, 1350, 2.7,
      "3 motoare sincrone cu magneți permanenți × 300 kW: 1 față + 2 spate",
      "n.d.",
-     "83 net / 92,5 brut", 800, "≈2335", "n.d.", "n.d.", "O / S",
-     "Putere limitată de baterie la 560 kW (≈610 kW în regim de boost, sursă secundară). Masa = 5148 lb (UE, neîncărcat)."),
+     "83 net / 92,5 brut", 800, 2260, "n.d.", "n.d.", "O / S",
+     "Putere limitată de baterie la 560 kW (≈610 kW în regim de boost, sursă secundară). Masa 2260 kg = „masă omologată” din "
+     "comunicatul Stellantis (citit doar prin motorul de căutare; site-urile Maserati / Stellantis blochează accesul automat). "
+     "Cx raportat diferit (0,26 / 0,27) – nepreluat."),
 ]
 
 first = HR + 1
@@ -328,10 +336,11 @@ g.freeze_panes = g.cell(row=GH + 2, column=SC)
 
 # ---------------------------------------------------------------- Surse
 s = wb.create_sheet("Surse")
-s["A1"] = "Surse (accesate 07.10.2026)"
+s["A1"] = "Surse (accesate 07.10.2026; verificare directă a paginilor producătorilor la 07.10.2026)"
 s["A1"].font = F_TITLE
-s["A2"] = ("Notă: paginile au fost consultate prin motor de căutare; valorile marcate S trebuie verificate pe pagina "
-           "producătorului înainte de predare. Datele de concept nu sunt valori omologate.")
+s["A2"] = ("Notă: Mercedes, Porsche, Audi, Lotus, Lucid, Rimac și BYD au fost verificate direct pe documentele producătorului. "
+           "Tesla, Maserati și Xiaomi blochează accesul automat – valorile lor rămân parțial S. "
+           "Datele de concept nu sunt valori omologate.")
 s["A2"].font = F_NOTE
 sources = [
     ("Mercedes-AMG Concept GT XX", "mercedes-amg.com – Concept AMG GT XX", "https://www.mercedes-amg.com/en/concept-amg-gt-xx"),
@@ -340,6 +349,12 @@ sources = [
     ("Mercedes-AMG Concept GT XX", "Motor1 – Concept GT XX (Cx 0,198, baterie)", "https://www.motor1.com/news/763606/amg-gt-xx-concept-first-look/"),
     ("Mercedes-AMG Concept GT XX", "Interesting Engineering – record Nardò", "https://interestingengineering.com/photo-story/mercedes-amg-ev-concept-breaks-records"),
     ("Mercedes-AMG Concept GT XX", "Driven (NZ) – arhitectura HP.EDU", "https://www.drivencarguide.co.nz/news/mercedes-amgs-concept-amg-gt-xx-packs-serious-tech-under-throwback-looks/"),
+    ("Mercedes-AMG Concept GT XX", "Mercedes-Benz Media – comunicat CONCEPT AMG GT XX (date tehnice, Cx, arie frontală)", "https://media.mercedes-benz.com/en/article/dc62bb92-5082-42f1-bc9a-c838bc09e985"),
+    ("Mercedes-AMG Concept GT XX", "Mercedes-Benz Media – recorduri Nardò 08/2025", "https://media.mercedes-benz.com/en/article/b2d73049-f14b-4019-8da3-a0dd5e6dfb89"),
+    ("Mercedes-AMG GT 63 4-Door Coupé", "Mercedes-Benz Media – comunicat de lansare 20.05.2026 (tabele tehnice GT 63 / GT 55)", "https://media.mercedes-benz.com/en/article/c8b7109f-2287-4070-b776-9204da1513ef"),
+    ("Mercedes-AMG GT 63 4-Door Coupé", "Mercedes-Benz Media – start comenzi 27.05.2026 (consum WLTP, nota „1-foot rollout”)", "https://media.mercedes-benz.com/article/f037de81-64ba-4236-b555-75a5f4c3a56b"),
+    ("Mercedes-AMG GT 63 4-Door Coupé", "Mercedes-Benz Media – motorul cu flux axial, HP.EDU cu reductor planetar", "https://media.mercedes-benz.com/en/article/bebac2af-acdc-465a-9538-adb0bf3d8ccf"),
+    ("Mercedes-AMG GT 63 4-Door Coupé", "Mercedes-Benz Media – GT 53 4-Door Coupé (aceeași caroserie: arie frontală 2,44 m²)", "https://media.mercedes-benz.com/en/article/0955928c-b613-41b4-b754-08399bbfcccc"),
     ("Mercedes-AMG GT 63 4-Door Coupé", "mercedes-amg.com – GT 4-Door Coupé", "https://www.mercedes-amg.com/en/gt-4-door-coupe"),
     ("Mercedes-AMG GT 63 4-Door Coupé", "Mercedes-Benz – producția motorului cu flux axial (Berlin)", "https://group.mercedes-benz.com/company/production/news/axial-flux-motor-berlin.html"),
     ("Mercedes-AMG GT 63 4-Door Coupé", "electrive.com – prezentare 20.05.2026", "https://www.electrive.com/2026/05/20/electric-powerhouse-mercedes-amg-unveils-gt-4-door-coupe/"),
@@ -352,19 +367,24 @@ sources = [
     ("Audi RS e-tron GT performance", "Audi – comunicat de presă", "https://www.audi.com/en/press-releases/audis-most-powerful-production-vehicle-the-new-rs-e-tron-gt-performance-16222"),
     ("Audi RS e-tron GT performance", "Audi MediaCenter – date tehnice (PDF)", "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1392/file_en/91bfc69ec55530e277b5023245b77c1c82772920/eTD-Audi-RS-e-tron-GT-performance-550kW_250515.pdf"),
     ("Audi RS e-tron GT performance", "Audi Magazine Australia – 1027 Nm", "https://magazine.audi.com.au/article/peak-performance"),
-    ("Lotus Emeya R", "evkx.net – fișă tehnică", "https://evkx.net/models/lotus/emeya/emeya_r/specifications"),
+    ("Lotus Emeya R", "Lotus – presă, specificații tehnice Emeya (putere, cuplu, transmisie, 705 V, WLTP)", "https://www.lotuscars.com/en/press/models/emeya"),
+    ("Lotus Emeya R", "Lotus – pagina de specificații Emeya (consum WLTP gamă, „2 speed trans.”)", "https://www.lotuscars.com/en-GB/emeya/specifications"),
+    ("Lotus Emeya R", "evkx.net – fișă tehnică (masă)", "https://evkx.net/models/lotus/emeya/emeya_r/specifications"),
     ("Lotus Emeya R", "CarNewsChina – baza de date", "https://data.carnewschina.com/database/lotus/lotus-emeya/2024"),
-    ("Tesla Model S Plaid", "evkx.net – fișă tehnică", "https://evkx.net/models/tesla/model_s/model_s_plaid/specifications/"),
+    ("Tesla Model S Plaid", "evkx.net – fișă tehnică (inclusiv Cx 0,208)", "https://evkx.net/models/tesla/model_s/model_s_plaid/specifications/"),
     ("Lucid Air Sapphire", "Lucid – specificații finale de producție", "https://lucidmotors.com/stories/final-production-specs-sapphire"),
     ("Lucid Air Sapphire", "Lucid – fișă tehnică 2024 (PDF)", "https://lucidmotors.com/media/document/lucid-air-sapphire-technical-specs-2024.pdf"),
     ("Xiaomi SU7 Ultra", "evkx.net – fișă tehnică", "https://evkx.net/models/xiaomi/su7/su7_ultra/specifications"),
+    ("Xiaomi SU7 Ultra", "ZOL – parametri SU7 Ultra (consum CLTC 16,5 kWh/100 km)", "https://detail.zol.com.cn/2113/2112093/param.shtml"),
     ("Xiaomi SU7 Ultra", "CarNewsChina – lansare SU7 Ultra / V8s", "https://carnewschina.com/2024/07/19/new-xiaomi-su7-ultra-with-1548-horsepower-and-v8s-motor-unveiled-in-china"),
+    ("Yangwang U9", "BYD – comunicat de lansare U9 (1680 Nm, 309,19 km/h, 2,36 s)", "https://www.byd.com/us/news-list/YANGWANG-Launched-the-U9-Priced-at-1-68-Million-RMB"),
     ("Yangwang U9", "autotijd.be – fișă tehnică", "https://autotijd.be/en/specs/yangwang/u9/960-kw-awd-4586"),
     ("Yangwang U9", "CarNewsChina – parametri", "https://data.carnewschina.com/database/yangwang/yangwang-u9/2024/params"),
     ("Yangwang U9", "Cars24 – record U9 Track Edition", "https://www.cars24.com.au/car-news/yangwang-u9-track-edition-sets-global-ev-speed-record/"),
-    ("Rimac Nevera", "Rimac – specificații tehnice (PDF)", "https://web-cdn.rimac-automobili.com/wp-content/uploads/2023/11/20171226/Nevera_Technical-specifications.pdf"),
-    ("Rimac Nevera", "Rimac – Nevera", "https://www.rimac-automobili.com/nevera/"),
+    ("Rimac Nevera", "Rimac – specificații tehnice (PDF)", "https://cloudfront.rimac-automobili.com/wp-content/uploads/2023/11/20171226/Nevera_Technical-specifications.pdf"),
+    ("Rimac Nevera", "Rimac – Nevera (consum WLTP 30,0 kWh/100 km, Cx 0,3)", "https://www.rimac-automobili.com/nevera/"),
     ("Maserati GranTurismo Folgore", "Maserati – GranTurismo Folgore", "https://www.maserati.com/us/en/models/granturismo/granturismo-folgore"),
+    ("Maserati GranTurismo Folgore", "Stellantis Media – comunicat New Maserati GranTurismo (masă omologată 2260 kg; acces blocat, citit prin motor de căutare)", "https://www.media.stellantis.com/em-en/maserati/press/new-maserati-granturismo"),
     ("Maserati GranTurismo Folgore", "ArenaEV – fișă tehnică", "https://m.arenaev.com/maserati_granturismo_folgore_92kwh_2023-specs-amps-362.php"),
     ("Structura anului universitar", "Structura anului universitar 2026–2027 (model național)", "https://unarte.org/wp-content/uploads/2026/08/Structura-anului-universitar-2026-2027.pdf"),
 ]
