@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "perplexity": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/scripts/perplexity-mcp.sh"],
+      "env": {
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY:-}",
+        "NODE_USE_ENV_PROXY": "1"
+      }
+    }
+  }
+}
