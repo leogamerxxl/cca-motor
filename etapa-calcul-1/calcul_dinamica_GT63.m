@@ -34,7 +34,8 @@ g       = 9.81;          % [m/s^2]
 rho     = 1.225;         % densitatea aerului, atmosfera standard [kg/m^3]
 f       = 0.012;         % rezistenta la rulare, asfalt uscat normal [-]
 mu      = 0.85;          % aderenta, asfalt uscat (0,80-0,90) [-]
-mu_perf = 1.20;          % aderenta, anvelope de performanta (ipoteza) [-]
+mu_perf = 1.20;          % aderenta, anvelope de performanta: calibrare (mu necesar = 1,19) [-]
+P_cal   = 750e3;         % puterea medie care reproduce 0-200 km/h in 6,8 s (calibrare) [W]
 
 % Cerinte de calcul
 v_acc   = 100;           % [km/h]
@@ -82,7 +83,7 @@ for j = 1:numel(v)
 end
 
 %% 3. Indicatori derivati
-a_max0   = (mu - f)*g/delta;                       % acceleratia maxima la pornire (aderenta)
+a_max0   = (mu - f)*g;                             % acceleratia maxima la pornire (aderenta: forta de contact accelereaza doar M)
 p_adh    = (mu - f)*100;                           % panta maxima, limita de aderenta [%]
 vmaxP    = @(P) max(real(roots([0.5*rho*Cx*S 0 f*M*g -eta*P])));   % 1/2 rho Cx S v^3 + f M g v = eta P
 v_cont   = vmaxP(P_cont)*3.6;
@@ -99,15 +100,20 @@ Frez0  = Fra + f*M*g;
 Frez10 = Fra + M*g*(f*cos(atan(p_1/100)) + sin(atan(p_1/100)));
 Fdrv_vf   = F_drive0*ones(size(vv));  Fdrv_vf(2:end)   = min(F_drive0, eta*P_vf./vv(2:end));
 Fdrv_cont = F_drive0*ones(size(vv));  Fdrv_cont(2:end) = min(F_drive0, eta*P_cont./vv(2:end));
-Fmax_us   = min(Fdrv_vf, mu*M*g);
-Fmax_perf = min(Fdrv_vf, mu_perf*M*g);
-a_us   = (Fmax_us   - Frez0)/(delta*M);
-a_perf = (Fmax_perf - Frez0)/(delta*M);
-t_us   = [0 cumsum(diff(vv)./((a_us(1:end-1)   + a_us(2:end))/2))];     % metoda trapezelor
-t_perf = [0 cumsum(diff(vv)./((a_perf(1:end-1) + a_perf(2:end))/2))];
-fprintf('t 0-100: %.3f s (mu=%.2f), %.3f s (mu=%.2f); oficial %.1f s\n', t_us(vk==100), mu, ...
-        t_perf(vk==100), mu_perf, t_acc);
-fprintf('t 0-200: %.3f s (mu=%.2f); oficial %.1f s\n', t_perf(vk==200), mu_perf, t_200);
+Fdrv_cal  = F_drive0*ones(size(vv));  Fdrv_cal(2:end)  = min(F_drive0, eta*P_cal./vv(2:end));
+% la limita de aderenta forta de contact accelereaza doar masa M; masele in rotatie (delta) le antreneaza motorul
+acc    = @(Fdrv, mu_x) min((mu_x*M*g - Frez0)/M, (Fdrv - Frez0)/(delta*M));
+a_us   = acc(Fdrv_vf, mu);
+a_perf = acc(Fdrv_vf, mu_perf);
+a_cal  = acc(Fdrv_cal, mu_perf);
+tint   = @(a) [0 cumsum(diff(vv)./((a(1:end-1) + a(2:end))/2))];   % regula trapezelor pentru dv/dt = a
+t_us   = tint(a_us);
+t_perf = tint(a_perf);
+t_cal  = tint(a_cal);
+fprintf('t 0-100: %.3f s (mu=%.2f), %.3f s (mu=%.2f), %.3f s (mu=%.2f, P_cal); oficial %.1f s\n', ...
+        t_us(vk==100), mu, t_perf(vk==100), mu_perf, t_cal(vk==100), mu_perf, t_acc);
+fprintf('t 0-200: %.3f s (mu=%.2f, P_varf), %.3f s (mu=%.2f, P_cal=%.0f kW); oficial %.1f s\n', ...
+        t_perf(vk==200), mu_perf, t_cal(vk==200), mu_perf, P_cal/1e3, t_200);
 
 %% 5. Grafice
 fig1 = figure('Name', 'Caracteristica de tractiune');
@@ -128,9 +134,10 @@ legend('drum orizontal', 'rampa 10%', 'P_{varf} = 860 kW', 'P_{cont} = 530 kW', 
 print(fig2, '-dpng', '-r120', 'fig_puteri.png');
 
 fig3 = figure('Name', 'Accelerare');
-plot(t_us, vk, t_perf, vk, 'LineWidth', 1.5); hold on;
+plot(t_us, vk, t_perf, vk, t_cal, vk, 'LineWidth', 1.5); hold on;
 plot([t_acc t_200], [100 200], 'ko', 'MarkerFaceColor', 'k');
 grid on; xlabel('t [s]'); ylabel('v [km/h]'); xlim([0 15]);
 title('Accelerare din loc (model) vs. date oficiale');
-legend('\mu = 0,85 (asfalt uscat)', '\mu = 1,20 (anvelope performanta)', 'oficial 0-100 / 0-200', 'Location', 'southeast');
+legend('\mu = 0,85 (asfalt uscat)', '\mu = 1,20, P_{varf} = 860 kW', '\mu = 1,20, P_{cal} = 750 kW', ...
+       'oficial 0-100 / 0-200', 'Location', 'southeast');
 print(fig3, '-dpng', '-r120', 'fig_accelerare.png');

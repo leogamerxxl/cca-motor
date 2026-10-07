@@ -58,6 +58,20 @@ def name(nm, sheet, ref):
     wb.defined_names[nm] = DefinedName(nm, attr_text=f"'{sheet}'!{ref}")
 
 
+# Number-to-text for labels and conclusions, independent of the reader's Excel locale:
+# integers grouped with a space (2 582), decimals with a comma (2,39).
+def n0(x):
+    return f'SUBSTITUTE(SUBSTITUTE(FIXED({x},0),","," "),"."," ")'
+
+
+def nd(x, d):
+    return f'SUBSTITUTE(FIXED({x},{d},TRUE),".",",")'
+
+
+def pct(x):
+    return f'FIXED(100*({x}),0,TRUE)&" %"'
+
+
 # ====================================================================== Date de intrare
 ws = wb.active
 ws.title = IN
@@ -65,7 +79,8 @@ ws["A1"] = "Etapa 1 de calcul – dinamica longitudinală: date de intrare"
 ws["A1"].font = F_TITLE
 ws["A2"] = ("Vehicul: Mercedes-AMG GT 63 4MATIC+ 4-Door Coupé (versiunea de serie a Concept AMG GT XX). "
             "Text albastru = valoare introdusă (modificabilă); text negru = formulă. "
-            "Numele din coloana A pot fi folosite direct în formule (ex. =0,5*rho_aer*C_x*A_f*v^2).")
+            "Numele din coloana A pot fi folosite direct în formule; de exemplu, în foaia „Calcul regimuri” "
+            "F_ra = ½·ρ·Cx·S·v² este =0.5*rho_aer*C_x*A_f*E7^2.")
 ws["A2"].font = F_NOTE
 ws.merge_cells("A2:F2")
 ws.row_dimensions[2].height = 28
@@ -82,7 +97,7 @@ SRC_MB = "Mercedes-Benz Media, comunicat de lansare 20.05.2026 (tabel tehnic)"
 inputs = [
     ("SEC", "Vehicul", None, None, None, None, None),
     ("M_DIN", "Masa proprie DIN (fără șofer)", 2460, "kg", OFFICIAL, SRC_MB, "#,##0"),
-    ("m_sofer", "Masa șoferului (convenția UE)", 75, "kg", ASSUME, "Regulamentul UE 1230/2012: masa în ordine de mers include șoferul de 75 kg", "0"),
+    ("m_sofer", "Masa șoferului (convenția UE)", 75, "kg", ASSUME, "Regulamentul de punere în aplicare (UE) 2021/535 (anterior 1230/2012): masa în ordine de mers include șoferul de 75 kg", "0"),
     ("M_calc", "Masa totală de calcul M", "=M_DIN+m_sofer", "kg", CALC_T, "Egală cu masa UE în ordine de mers: 2535 kg (valoare oficială)", "#,##0"),
     ("C_x", "Coeficient de rezistență aerodinamică Cx", 0.22, "–", OFFICIAL, SRC_MB, "0.00"),
     ("A_f", "Aria frontală S", 2.44, "m²", OFFICIAL, SRC_MB + " (valoare publicată pentru gama AMG GT 4-Door Coupé electric)", "0.00"),
@@ -97,9 +112,9 @@ inputs = [
     ("B_anv", "Lățimea anvelopei (punte spate)", 295, "mm", ASSUME, "Dimensiunile anvelopelor versiunii electrice nu sunt publicate; se preia 295/30 R21 de la AMG GT 63 4-Door Coupé (V8). De confirmat în CoC.", "0"),
     ("h_rap", "Raportul de aspect al anvelopei (înălțime/lățime)", 0.30, "–", ASSUME, "Idem (profil 30)", "0.00"),
     ("k_def", "Coeficient de deformare radială sub sarcină", 0.97, "–", ASSUME, "Raza dinamică ≈ 0,96–0,98 × raza liberă (valoare uzuală)", "0.00"),
-    ("r_w", "Raza dinamică a roții r_w", "=k_def*(D_jant*25.4/2+B_anv*h_rap)/1000", "m", CALC_T, "Raza liberă = D_jantă/2 + B·h/B; r_w = k_def × raza liberă", "0.000"),
+    ("r_w", "Raza dinamică a roții r_w", "=k_def*(D_jant*25.4/2+B_anv*h_rap)/1000", "m", CALC_T, "Raza liberă = D_jant·25,4/2 + B_anv·h_rap [mm]; r_w = k_def × raza liberă / 1000 [m]", "0.000"),
     ("n_m_vmax", "Turația motoarelor de pe puntea spate la v_max", 13000, "rot/min", OFFICIAL, "Mercedes-Benz Media: „peste 13 000 rot/min” la v_max (spate), peste 15 000 rot/min (față)", "#,##0"),
-    ("i_g", "Raportul total de transmitere i_g (punte spate, estimat)", "=n_m_vmax/(v_max/3.6/(2*PI()*r_w)*60)", "–", CALC_T, "Raportul nu este publicat: i_g = n_motor / n_roată la v_max (limită inferioară). Se folosește ca raport echivalent pentru întreaga acționare.", "0.00"),
+    ("i_g", "Raportul total de transmitere i_g (punte spate, estimat)", "=n_m_vmax/(v_max/3.6/(2*PI()*r_w)*60)", "–", CALC_T, "Raportul nu este publicat: i_g = n_m / n_w la v_max (limită inferioară, turația oficială fiind „peste 13 000”). Se folosește ca raport echivalent pentru întreaga acționare. Deoarece i_g se calculează din r_w, raportul i_g/r_w este fix: forțele, puterile și timpii nu depind de r_w (doar T_w și n_w).", "0.00"),
     ("eta_t", "Randamentul transmisiei η (motor → roată)", 0.95, "–", ASSUME, "Reductor planetar cu o treaptă (~0,97) × pierderi în arbori/lagăre; valoare uzuală 0,93–0,97", "0.00"),
     ("delta_m", "Coeficientul maselor în rotație δ", 1.0, "–", COURSE, "Curs C1, rel. (23): pentru modelul inițial F_i = M·a este suficient (δ = 1)", "0.00"),
     ("SEC", "Mediu și drum", None, None, None, None, None),
@@ -107,12 +122,13 @@ inputs = [
     ("rho_aer", "Densitatea aerului ρ", 1.225, "kg/m³", ASSUME, "Atmosfera standard: 15 °C, 101,325 kPa, fără vânt (rel. 7)", "0.000"),
     ("f_r", "Coeficientul de rezistență la rulare f", 0.012, "–", COURSE, "Curs C1, tabel: asfalt uscat, normal – 0,012 (interval 0,010–0,015)", "0.000"),
     ("mu_us", "Coeficientul de aderență μ – asfalt uscat", 0.85, "–", COURSE, "Curs C1, tabel: asfalt uscat 0,80–0,90 (mijlocul intervalului)", "0.00"),
-    ("mu_perf", "Coeficientul de aderență μ – anvelope de performanță", 1.20, "–", ASSUME, "Anvelope sport de înaltă aderență pe asfalt uscat, cald (verificare a performanței oficiale)", "0.00"),
+    ("mu_perf", "Coeficientul de aderență μ – anvelope de performanță", 1.20, "–", "calibrare", "Valoare de calibrare: μ necesar pentru 0–100 km/h în 2,4 s este 1,19 (regimul S2a). Depășește tabelul cursului (asfalt uscat 0,80–0,90) – realizabil doar cu anvelope sport pe asfalt uscat, cald.", "0.00"),
+    ("P_cal", "Puterea medie disponibilă care reproduce 0–200 km/h", 750, "kW", "calibrare", "Aleasă astfel încât modelul (μ = 1,20) să dea 0–200 km/h ≈ 6,8 s – foaia „Caracteristica tractiune”, coloanele V–X. Arată că cei 860 kW nu sunt disponibili integral pe tot intervalul 100–200 km/h.", "#,##0"),
     ("SEC", "Cerințe de calcul (regimuri)", None, None, None, None, None),
     ("v_acc", "Viteza de capăt a accelerării", 100, "km/h", OFFICIAL, "0–100 km/h", "0"),
     ("a_med", "Accelerația medie impusă 0–100 km/h", "=v_acc/3.6/t_acc", "m/s²", CALC_T, "a = Δv / t", "0.00"),
     ("p_1", "Pantă de verificare (regim S3)", 10, "%", COURSE, "Curs C1, exemplul rel. (21): pantă de 10 %", "0"),
-    ("v_p1", "Viteza constantă pe panta p_1", 100, "km/h", ASSUME, "Deplasare pe autostradă în rampă", "0"),
+    ("v_p1", "Viteza constantă pe panta p_1", 100, "km/h", ASSUME, "Drum național / montan în rampă; panta de 10 % este exemplul din curs, rel. (21)", "0"),
     ("p_max", "Panta maximă pentru pornire (regim S4)", 30, "%", ASSUME, "Cerință uzuală pentru autoturisme (rampe de parcare); se precizează în tema de proiectare", "0"),
 ]
 
@@ -143,12 +159,13 @@ for nm, label, val, unit, typ, src, fmt in inputs:
     r += 1
 
 r += 1
-ws.cell(row=r, column=1, value="Ipoteze ale modelului (curs C1, cap. 1):").font = F_BOLD
+ws.cell(row=r, column=1, value="Ipoteze ale modelului (curs C1):").font = F_BOLD
 notes = [
     "Model longitudinal simplificat: vehiculul este un corp rigid care se deplasează pe direcția pantei; vânt nul (rel. 7, nu rel. 8).",
-    "Tracțiune integrală (3 motoare, 2 spate + 1 față): întreaga greutate este pe roți motoare, deci F_z = M·g·cos α (rel. 37), fără transfer de sarcină între punți.",
-    "Acționarea este tratată ca un motor echivalent cu cuplul T_m,max și raportul i_g; F_t,drive = min(T_m,max·i_g·η/r_w ; η·P/v) (rel. 6 și 30).",
+    "Tracțiune integrală (3 motoare: 2 spate + 1 față) cu distribuție ideală a cuplului între punți, proporțională cu sarcina dinamică a fiecărei punți (rel. 39); suma sarcinilor normale este F_z = M·g·cos α (rel. 37). Verificarea pe punți (înălțimea centrului de greutate, rapoartele față/spate – cap. 10) rămâne pentru etapa următoare.",
+    "Acționarea este tratată ca un motor echivalent cu cuplul T_m,max și raportul i_g: F_t,drive = min(T_m,max·i_g·η/r_w ; η·P/v) (rel. 6 și 30), folosit în (40).",
     "f și μ sunt considerați constanți (nivelul „simplificat” din tabelul cursului: dimensionare preliminară).",
+    "Masele în rotație (δ, rel. 23): la limita de aderență forța din contactul roată–drum accelerează doar masa M, a = (μ·F_z − F_rez)/M; cuplul suplimentar pentru masele în rotație îl furnizează motorul. Cu δ = 1 cele două forme coincid.",
 ]
 for k, t in enumerate(notes, 1):
     c = ws.cell(row=r + k, column=1, value=f"{k}. {t}")
@@ -157,7 +174,7 @@ ws.freeze_panes = "A5"
 
 # ====================================================================== Calcul regimuri
 cs = wb.create_sheet(CALC)
-cs["A1"] = "Calculul regimurilor caracteristice – relațiile din curs C1"
+cs["A1"] = "Calculul regimurilor caracteristice – relațiile din cursul C1"
 cs["A1"].font = F_TITLE
 cs["A2"] = ("Fiecare coloană este un regim de funcționare. Rândurile urmează succesiunea din curs: "
             "rezistențe → forța de tracțiune necesară → cuplu și putere → verificarea aderenței și a acționării.")
@@ -165,11 +182,11 @@ cs["A2"].font = F_NOTE
 cs.merge_cells("A2:I2")
 
 scen = [
-    ("S1", "Viteză maximă, drum orizontal", "=v_max", 0, 0),
-    ("S2a", "Accelerare 0–100 km/h – la pornire (v = 0)", 0, 0, "=a_med"),
-    ("S2b", "Accelerare 0–100 km/h – la 100 km/h", "=v_acc", 0, "=a_med"),
-    ("S3", "Rampă 10 % la 100 km/h, viteză constantă", "=v_p1", "=p_1", 0),
-    ("S4", "Pornire pe panta maximă 30 % (v ≈ 0, a = 0)", 0, "=p_max", 0),
+    ("S1", f'="Viteză maximă "&{n0("v_max")}&" km/h, drum orizontal"', "=v_max", 0, 0),
+    ("S2a", f'="Accelerare 0–"&{n0("v_acc")}&" km/h în "&{nd("t_acc", 1)}&" s – la pornire (v = 0)"', 0, 0, "=a_med"),
+    ("S2b", f'="Accelerare 0–"&{n0("v_acc")}&" km/h în "&{nd("t_acc", 1)}&" s – la "&{n0("v_acc")}&" km/h"', "=v_acc", 0, "=a_med"),
+    ("S3", f'="Rampă "&{n0("p_1")}&" % la "&{n0("v_p1")}&" km/h, viteză constantă"', "=v_p1", "=p_1", 0),
+    ("S4", f'="Pornire pe panta maximă de "&{n0("p_max")}&" % (v ≈ 0, a = 0)"', 0, "=p_max", 0),
 ]
 HR = 4
 cols = ["Rel. curs", "Mărime", "Expresie", "Unitate"] + [s[0] for s in scen]
@@ -203,13 +220,13 @@ rows = [
     ("", "Turația roții n_w", "v / (2π·r_w) · 60", "rot/min", "={c}{v_ms}/(2*PI()*r_w)*60", "#,##0", False),
     ("", "Turația motoarelor n_m", "n_w · i_g", "rot/min", "={c}{nw}*i_g", "#,##0", True),
     ("(37)", "Sarcina normală pe roți F_z", "M·g·cos α", "N", "=M_calc*g_acc*COS(RADIANS({c}{alpha}))", "#,##0", False),
-    ("(35)", "Forța maximă transmisibilă prin aderență μ·F_z", "μ·F_z (μ = 0,85)", "N", "=mu_us*{c}{fz}", "#,##0", False),
+    ("(35)", "Forța maximă transmisibilă prin aderență μ·F_z", '="μ·F_z (μ = "&' + nd("mu_us", 2) + '&")"', "N", "=mu_us*{c}{fz}", "#,##0", False),
     ("(36)", "Coeficient de aderență necesar μ_nec", "F_t / F_z", "–", "={c}{ft}/{c}{fz}", "0.00", True),
     ("(36)/(41)", "Verificare aderență F_t ≤ μ·F_z", "", "", '=IF({c}{ft}<={c}{adh},"DA","NU – patinare")', "@", True),
-    ("(40)", "Forța maximă a acționării F_t,drive", "min(T_m,max·i_g·η/r_w ; η·P_vârf/v)", "N",
+    ("(6)/(30) → (40)", "Forța maximă a acționării F_t,drive", "min(T_m,max·i_g·η/r_w ; η·P_vârf/v)", "N",
      "=IF({c}{v_ms}=0,T_max*i_g*eta_t/r_w,MIN(T_max*i_g*eta_t/r_w,eta_t*P_vf*1000/{c}{v_ms}))", "#,##0", False),
     ("(42)", "Forța de tracțiune maximă realizabilă F_t,max", "min(F_t,drive ; μ·F_z)", "N", "=MIN({c}{fdrive},{c}{adh})", "#,##0", False),
-    ("", "Limitarea dominantă", "", "", '=IF({c}{fdrive}<={c}{adh},"acționare","aderență")', "@", False),
+    ("", "Limita activă pentru F_t,max", "", "", '=IF({c}{ftmax}>={c}{ft},"– (rezervă)",IF({c}{fdrive}<={c}{adh},"acționare","aderență"))', "@", False),
     ("(43)", "Condiția de realizare F_t,max ≥ F_t", "", "", '=IF({c}{ftmax}>={c}{ft},"ÎNDEPLINITĂ","NEÎNDEPLINITĂ")', "@", True),
     ("", "Rezerva de forță F_t,max − F_t", "", "N", "={c}{ftmax}-{c}{ft}", "#,##0;[Red]-#,##0", False),
     ("", "Încărcarea față de puterea continuă", "P_m / P_cont", "%", "={c}{pm}/P_cont", "0%", False),
@@ -250,9 +267,9 @@ cs.freeze_panes = cs.cell(row=first, column=5)
 d0 = first + len(rows) + 2
 cs.cell(row=d0, column=1, value="Indicatori derivați").font = F_SUB
 derived = [
-    ("D1", "Accelerația maximă la pornire, limitată de aderență (μ = 0,85)", "(μ − f)·g / δ", "m/s²",
-     "=(mu_us-f_r)*g_acc/delta_m", "0.00"),
-    ("D2", "Panta maximă urcată limitată de aderență (μ = 0,85), v ≈ 0", "tg α = μ − f  (din μ·cos α ≥ f·cos α + sin α)", "%",
+    ("D1", '="Accelerația maximă la pornire, limitată de aderență (μ = "&' + nd("mu_us", 2) + '&")"',
+     "(μ − f)·g  (forța de aderență accelerează doar masa M)", "m/s²", "=(mu_us-f_r)*g_acc", "0.00"),
+    ("D2", '="Panta maximă urcată, limitată de aderență (μ = "&' + nd("mu_us", 2) + '&"), v ≈ 0"', "tg α = μ − f  (din μ·cos α ≥ f·cos α + sin α)", "%",
      "=(mu_us-f_r)*100", "0.0"),
     ("D3", "Raportul F_t,drive(0) / (M·g)", "T_m,max·i_g·η / (r_w·M·g)", "–",
      "=T_max*i_g*eta_t/(r_w*M_calc*g_acc)", "0.00"),
@@ -264,7 +281,7 @@ derived = [
      "=3.6*({cub_vf})", "0"),
     ("D7", "Viteza la care se trece de la limitarea de cuplu la cea de putere (P_vârf)", "v_b = η·P_vârf / F_t,drive(0)", "km/h",
      "=3.6*eta_t*P_vf*1000/(T_max*i_g*eta_t/r_w)", "0.0"),
-    ("D8", "Viteza la care puterea de vârf egalează aderența (μ = 1,20)", "v = η·P_vârf / (μ_perf·M·g)", "km/h",
+    ("D8", '="Viteza la care forța limitată de puterea de vârf egalează limita de aderență (μ = "&' + nd("mu_perf", 2) + '&")"', "v = η·P_vârf / (μ_perf·M·g)", "km/h",
      "=3.6*eta_t*P_vf*1000/(mu_perf*M_calc*g_acc)", "0.0"),
 ]
 header_row = d0 + 1
@@ -305,20 +322,24 @@ for k, (nr, label, expr, unit, f, fmt) in enumerate(derived):
 ts = wb.create_sheet(CAR)
 ts["A1"] = "Caracteristica de tracțiune F(v), puterea P(v) și estimarea accelerării"
 ts["A1"].font = F_TITLE
-ts["A2"] = ("Pas de 5 km/h. F_t,drive = min(T_m,max·i_g·η/r_w ; η·P/v). F_t,max = min(F_t,drive ; μ·M·g). "
-            "a = (F_t,max − F_ra − F_f)/(δ·M); timpul se obține prin integrare numerică: Δt = Δv / a_mediu (metoda trapezelor). "
-            "Curba „continuu” folosește T_m,max la viteze mici, deoarece cuplul continuu nu este publicat.")
+ts["A2"] = ("Pas de 5 km/h. F_t,drive = min(T_m,max·i_g·η/r_w ; η·P/v). F_rez = F_ra + F_f. "
+            "a = min[(μ·M·g − F_rez)/M ; (F_t,drive − F_rez)/(δ·M)]; timpul se obține prin integrare numerică: "
+            "Δt = 2·Δv/(a_i + a_i+1) (regula trapezelor aplicată ecuației dv/dt = a). "
+            "Curba pentru puterea continuă folosește T_m,max la viteze mici, deoarece cuplul continuu nu este publicat. "
+            "Coloanele V–X: sensibilitate cu puterea medie P_cal în locul puterii de vârf.")
 ts["A2"].font = F_NOTE
-ts.merge_cells("A2:T2")
+ts.merge_cells("A2:X2")
 ts.row_dimensions[2].height = 30
 ts["A2"].alignment = WRAP
-cols_t = ["v [km/h]", "v [m/s]", "F_ra [N]", "F_f [N]", "F_rez orizontal [N]", "F_rez rampă 10 % [N]",
-          "F_t,drive vârf [N]", "F_t,drive continuu [N]", "μ·M·g (μ=0,85) [N]", "μ·M·g (μ=1,20) [N]",
-          "F_t,max μ=0,85 [N]", "F_t,max μ=1,20 [N]", "a μ=0,85 [m/s²]", "a μ=1,20 [m/s²]",
-          "t μ=0,85 [s]", "t μ=1,20 [s]", "P_m orizontal [kW]", "P_m rampă 10 % [kW]", "P_vârf [kW]", "P_cont [kW]",
-          "n_m [rot/min]"]
+MU1, MU2 = nd("mu_us", 2), nd("mu_perf", 2)
+cols_t = ["v [km/h]", "v [m/s]", "F_ra [N]", "F_f [N]", "F_rez orizontal [N]", f'="F_rez rampă "&{n0("p_1")}&" % [N]"',
+          "F_t,drive vârf [N]", "F_t,drive continuu [N]", f'="μ·M·g (μ = "&{MU1}&") [N]"', f'="μ·M·g (μ = "&{MU2}&") [N]"',
+          f'="F_t,max μ = "&{MU1}&" [N]"', f'="F_t,max μ = "&{MU2}&" [N]"', f'="a μ = "&{MU1}&" [m/s²]"',
+          f'="a μ = "&{MU2}&" [m/s²]"', f'="t μ = "&{MU1}&" [s]"', f'="t μ = "&{MU2}&" [s]"', "P_m orizontal [kW]",
+          f'="P_m rampă "&{n0("p_1")}&" % [kW]"', "P_vârf [kW]", "P_cont [kW]", "n_m [rot/min]",
+          f'="F_t,drive P_cal = "&{n0("P_cal")}&" kW [N]"', f'="a μ = "&{MU2}&", P_cal [m/s²]"', f'="t μ = "&{MU2}&", P_cal [s]"']
 TH = 4
-header(ts, TH, cols_t, [8, 8, 9, 8, 11, 11, 11, 11, 11, 11, 11, 11, 9, 9, 9, 9, 11, 11, 9, 9, 10])
+header(ts, TH, cols_t, [8, 8, 9, 8, 11, 11, 11, 11, 11, 11, 11, 11, 9, 9, 9, 9, 11, 11, 9, 9, 10, 12, 10, 10])
 ts.row_dimensions[TH].height = 42
 STEP = 5
 VMAXT = 300
@@ -339,8 +360,8 @@ for k in range(n_pts):
         10: "=mu_perf*M_calc*g_acc",
         11: f"=MIN(G{row},I{row})",
         12: f"=MIN(G{row},J{row})",
-        13: f"=(K{row}-E{row})/(delta_m*M_calc)",
-        14: f"=(L{row}-E{row})/(delta_m*M_calc)",
+        13: f"=MIN((I{row}-E{row})/M_calc,(G{row}-E{row})/(delta_m*M_calc))",
+        14: f"=MIN((J{row}-E{row})/M_calc,(G{row}-E{row})/(delta_m*M_calc))",
         15: 0 if k == 0 else f"=O{row - 1}+(B{row}-B{row - 1})/((M{row}+M{row - 1})/2)",
         16: 0 if k == 0 else f"=P{row - 1}+(B{row}-B{row - 1})/((N{row}+N{row - 1})/2)",
         17: f"=E{row}*B{row}/eta_t/1000",
@@ -348,9 +369,12 @@ for k in range(n_pts):
         19: "=P_vf",
         20: "=P_cont",
         21: f"=B{row}/(2*PI()*r_w)*60*i_g",
+        22: f"=IF(B{row}=0,T_max*i_g*eta_t/r_w,MIN(T_max*i_g*eta_t/r_w,eta_t*P_cal*1000/B{row}))",
+        23: f"=MIN((J{row}-E{row})/M_calc,(V{row}-E{row})/(delta_m*M_calc))",
+        24: 0 if k == 0 else f"=X{row - 1}+(B{row}-B{row - 1})/((W{row}+W{row - 1})/2)",
     }
-    fmts = {1: "0", 2: "0.00", 13: "0.00", 14: "0.00", 15: "0.00", 16: "0.00"}
-    for c in range(1, 22):
+    fmts = {1: "0", 2: "0.00", 13: "0.00", 14: "0.00", 15: "0.00", 16: "0.00", 23: "0.00", 24: "0.00"}
+    for c in range(1, 25):
         cell = ts.cell(row=row, column=c, value=f[c])
         cell.font = F_INPUT if c == 1 else F_BASE
         cell.number_format = fmts.get(c, "#,##0")
@@ -384,15 +408,16 @@ def scatter(title, ytitle, series_cols, anchor, ymax=None):
     ts.add_chart(ch, anchor)
 
 
-scatter("Caracteristica de tracțiune: forțe la roți", "F [N]", [5, 6, 7, 8, 9, 10], f"W{TH}", ymax=35000)
-scatter("Puterea cerută motoarelor (v constantă) și puterea disponibilă", "P [kW]", [17, 18, 19, 20], f"W{TH + 22}", ymax=900)
+scatter("Caracteristica de tracțiune: forțe la roți", "F [N]", [5, 6, 7, 8, 9, 10], f"Z{TH}", ymax=35000)
+scatter("Puterea cerută motoarelor (v constantă) și puterea disponibilă", "P [kW]", [17, 18, 19, 20], f"Z{TH + 22}", ymax=900)
 
 # ====================================================================== Rezultate
 rs = wb.create_sheet(REZ, 0)
-rs["A1"] = "Etapa 1 de calcul – rezultate: dinamica longitudinală a Mercedes-AMG GT 63 4-Door Coupé"
+rs["A1"] = ("Etapa 1 de calcul – rezultate: dinamica longitudinală a autoturismului electric "
+            "Mercedes-AMG GT 63 4MATIC+ 4-Door Coupé (AMG.EA)")
 rs["A1"].font = F_TITLE
 rs["A2"] = ("Calcul după „Noțiuni generale de dinamica vehiculului” (curs CCA C1, L. Popescu, UPB). "
-            "Toate valorile sunt formule legate de foile „Date de intrare” și „Calcul regimuri”.")
+            "Toate valorile sunt formule legate de foile „Date de intrare”, „Calcul regimuri” și „Caracteristica tractiune”.")
 rs["A2"].font = F_NOTE
 rs.merge_cells("A2:L2")
 
@@ -401,11 +426,11 @@ rs["A4"].font = F_SUB
 main = [
     ("Masa de calcul M", "=M_calc", "kg", "#,##0"),
     ("Cx · S", "=C_x*A_f", "m²", "0.000"),
-    ("Coeficient de rulare f / aderență μ", '=FIXED(f_r,3)&" / "&FIXED(mu_us,2)', "–", "@"),
+    ("Coeficient de rezistență la rulare f / de aderență μ", "=" + nd("f_r", 3) + '&" / "&' + nd("mu_us", 2), "–", "@"),
     ("Raza dinamică a roții r_w", "=r_w", "m", "0.000"),
     ("Raport de transmitere estimat i_g", "=i_g", "–", "0.00"),
     ("Randament transmisie η", "=eta_t", "–", "0.00"),
-    ("Cuplu maxim / putere de vârf / putere continuă", '=FIXED(T_max,0,TRUE)&" N·m / "&FIXED(P_vf,0,TRUE)&" kW / "&FIXED(P_cont,0,TRUE)&" kW"', "", "@"),
+    ("Cuplu maxim / putere de vârf / putere continuă", "=" + n0("T_max") + '&" N·m / "&' + n0("P_vf") + '&" kW / "&' + n0("P_cont") + '&" kW"', "", "@"),
 ]
 for k, (lab, f, unit, fmt) in enumerate(main):
     row = 5 + k
@@ -420,7 +445,7 @@ r0 = 5 + len(main) + 1
 rs.cell(row=r0, column=1, value="2. Regimuri caracteristice (rel. 25–33, 35–43)").font = F_SUB
 rh = r0 + 1
 res_cols = ["Regim", "Descriere", "v [km/h]", "Pantă [%]", "a [m/s²]", "F_t nec. [N]", "T_w [N·m]", "P_w [kW]",
-            "P_m [kW]", "T_m [N·m]", "n_m [rot/min]", "μ necesar", "Verificare (43)", "Limitare"]
+            "P_m [kW]", "T_m [N·m]", "n_m [rot/min]", "μ necesar", "Verificare (43)", "Limita activă"]
 for c, h in enumerate(res_cols, 1):
     cell = rs.cell(row=rh, column=c, value=h)
     cell.font = F_HEAD
@@ -434,7 +459,7 @@ for j, s in enumerate(scen):
     row = rh + 1 + j
     L = get_column_letter(5 + j)
     rs.cell(row=row, column=1, value=s[0]).font = F_BOLD
-    rs.cell(row=row, column=2, value=s[1]).font = F_BASE
+    rs.cell(row=row, column=2, value=f"='{CALC}'!{L}{HR + 1}").font = F_BASE
     for c in range(3, len(res_cols) + 1):
         cell = rs.cell(row=row, column=c, value=f"='{CALC}'!{L}{R[map_rows[c - 1]]}")
         cell.font = F_BASE
@@ -463,23 +488,34 @@ def tlookup(col, v):
     return f"=INDEX('{CAR}'!{col}{t0}:{col}{tl},MATCH({v},'{CAR}'!A{t0}:A{tl},0))"
 
 
+CS = f"'{CALC}'!"
+# (key, label formula, calculated, official, number format, observation)
 ind = [
-    ("Timp 0–100 km/h, μ = 0,85 (asfalt uscat, tabel curs)", tlookup("O", "v_acc"), "=t_acc", "0.00",
-     "aderența limitează accelerarea"),
-    ("Timp 0–100 km/h, μ = 1,20 (anvelope de performanță)", tlookup("P", "v_acc"), "=t_acc", "0.00",
-     "verifică performanța oficială"),
-    ("Timp 0–200 km/h, μ = 1,20", tlookup("P", "200"), "=t_200", "0.00", "peste ≈100 km/h limitează puterea de vârf"),
-    ("Accelerația maximă la pornire, μ = 0,85 [m/s²]", f"='{CALC}'!E{DROW['D1']}", "=a_med", "0.00",
-     "oficial = accelerația medie 0–100"),
-    ("Coeficient de aderență necesar pentru 0–100 în 2,4 s", f"='{CALC}'!F{R['munec']}", "", "0.00", "regimul S2a"),
-    ("Viteza maximă teoretică cu puterea continuă [km/h]", f"='{CALC}'!E{DROW['D5']}", "=v_max", "0",
-     "v_max reală este limitată electronic / de turație"),
-    ("Panta maximă (limită de aderență, μ = 0,85) [%]", f"='{CALC}'!E{DROW['D2']}", "", "0.0", "tracțiune integrală"),
-    ("Puterea motoarelor la v_max = 300 km/h [kW]", f"='{CALC}'!E{R['pm']}", "=P_cont", "0.0",
-     "comparată cu puterea continuă"),
+    ("t100_us", '="Timp 0–100 km/h, μ = "&' + MU1 + '&" (asfalt uscat, tabelul cursului) [s]"', tlookup("O", "v_acc"),
+     "=t_acc", "0.00", '="aderența limitează accelerarea"'),
+    ("t100_perf", '="Timp 0–100 km/h, μ = "&' + MU2 + '&" (anvelope de performanță) [s]"', tlookup("P", "v_acc"),
+     "=t_acc", "0.00", f'="calibrare: μ_perf ≈ μ necesar = "&{nd(CS + "F" + str(R["munec"]), 2)}&", deci nu este o verificare independentă"'),
+    ("t200_perf", '="Timp 0–200 km/h, μ = "&' + MU2 + '&", P_vârf = "&' + n0("P_vf") + '&" kW [s]"', tlookup("P", "200"),
+     "=t_200", "0.00", '="model optimist: puterea de vârf este considerată disponibilă integral până la 200 km/h"'),
+    ("t100_cal", '="Timp 0–100 km/h, μ = "&' + MU2 + '&", P_cal = "&' + n0("P_cal") + '&" kW [s]"', tlookup("X", "v_acc"),
+     "=t_acc", "0.00", '="practic neschimbat: până la ≈ 100 km/h accelerarea este limitată de aderență"'),
+    ("t200_cal", '="Timp 0–200 km/h, μ = "&' + MU2 + '&", P_cal = "&' + n0("P_cal") + '&" kW [s]"', tlookup("X", "200"),
+     "=t_200", "0.00", '="P_cal = puterea medie disponibilă care reproduce timpul oficial"'),
+    ("a0", '="Accelerația maximă la pornire, μ = "&' + MU1 + '&" [m/s²]"', f"={CS}E{DROW['D1']}", "=a_med", "0.00",
+     '="oficial = accelerația medie 0–100 km/h (din "&' + nd("t_acc", 1) + '&" s)"'),
+    ("munec", '="Coeficient de aderență necesar pentru 0–100 km/h în "&' + nd("t_acc", 1) + '&" s"', f"={CS}F{R['munec']}",
+     "", "0.00", '="regimul S2a"'),
+    ("vteor", "Viteza maximă teoretică cu puterea continuă [km/h]", f"={CS}E{DROW['D5']}", "=v_max", "0",
+     '="v_max = "&' + n0("v_max") + '&" km/h este limitată electronic (oficial)"'),
+    ("pmax", '="Panta maximă, limită de aderență, μ = "&' + MU1 + '&" [%]"', f"={CS}E{DROW['D2']}", "", "0.0",
+     '="tracțiune integrală, distribuție ideală a cuplului"'),
+    ("pvmax", '="Puterea motoarelor la v_max = "&' + n0("v_max") + '&" km/h [kW]"', f"={CS}E{R['pm']}", "=P_cont", "0.0",
+     '="comparată cu puterea continuă"'),
 ]
-for k, (lab, fc, fo, fmt, obs) in enumerate(ind):
+IND = {}
+for k, (key, lab, fc, fo, fmt, obs) in enumerate(ind):
     row = ih + 1 + k
+    IND[key] = f"D{row}"
     rs.cell(row=row, column=1, value=lab).font = F_BASE
     a = rs.cell(row=row, column=4, value=fc)
     a.font = F_BOLD
@@ -497,13 +533,43 @@ for k, (lab, fc, fo, fmt, obs) in enumerate(ind):
 c0 = ih + len(ind) + 2
 rs.cell(row=c0, column=1, value="4. Concluzii").font = F_SUB
 S = f"'{CALC}'!"
+def T(*parts):
+    return "=" + "&".join(parts)
+
+
+def q(text):
+    return '"' + text + '"'
+
+
 concl = [
-    f'="1. La v_max = "&FIXED(v_max,0,TRUE)&" km/h pe drum orizontal sunt necesari F_t = "&FIXED({S}E{R["ft"]},0)&" N la roți, adică P_m = "&FIXED({S}E{R["pm"]},0,TRUE)&" kW – doar "&FIXED(100*({S}E{R["load_c"]}),0,TRUE)&" %"&" din puterea continuă; "&FIXED(100*({S}E{R["fra"]}/{S}E{R["ft"]}),0,TRUE)&" %"&" din rezistență este aerodinamică. Viteza maximă nu este limitată de putere, ci electronic și de turația motoarelor ("&FIXED({S}E{R["nm"]},0)&" rot/min)."',
-    f'="2. Accelerarea 0–100 km/h în "&FIXED(t_acc,1)&" s cere o forță de "&FIXED({S}F{R["ft"]},0)&" N la pornire, deci μ ≥ "&FIXED({S}F{R["munec"]},2)&". Cu μ = "&FIXED(mu_us,2)&" (asfalt uscat, tabelul cursului) forța transmisibilă este doar "&FIXED({S}F{R["adh"]},0)&" N, iar timpul minim estimat este "&FIXED(D{ih + 1},1)&" s: performanța este limitată de aderență, nu de acționare (F_t,drive = "&FIXED({S}F{R["fdrive"]},0)&" N)."',
-    f'="3. Cu anvelope de performanță (μ = "&FIXED(mu_perf,2)&") modelul dă 0–100 km/h în "&FIXED(D{ih + 2},2)&" s (oficial "&FIXED(t_acc,1)&" s) și 0–200 km/h în "&FIXED(D{ih + 3},1)&" s (oficial "&FIXED(t_200,1)&" s, abatere "&FIXED(100*(ABS(D{ih + 3}/t_200-1)),0,TRUE)&" %"&"). Abaterea la 0–200 km/h provine în principal din neglijarea maselor în rotație (δ = 1, rel. 23) și a pierderilor din invertor și baterie; ipotezele pentru r_w, i_g și η sunt plauzibile."',
-    f'="4. La 100 km/h, accelerația medie impusă ar cere P_m = "&FIXED({S}G{R["pm"]},0,TRUE)&" kW ("&FIXED(100*({S}G{R["load_p"]}),0,TRUE)&" %"&" din puterea de vârf de "&FIXED(P_vf,0,TRUE)&" kW): accelerarea reală scade odată cu viteza, iar puterea de vârf este necesară doar pentru performanța maximă (Launch Control)."',
-    f'="5. Rampa de "&FIXED(p_1,0,TRUE)&" % la "&FIXED(v_p1,0,TRUE)&" km/h cere "&FIXED({S}H{R["pm"]},0,TRUE)&" kW, iar pornirea pe panta de "&FIXED(p_max,0,TRUE)&" % cere "&FIXED({S}I{R["ft"]},0)&" N (μ_nec = "&FIXED({S}I{R["munec"]},2)&"): ambele sunt îndeplinite cu rezervă mare."',
-    '="6. Date de confirmat în etapele următoare: dimensiunea anvelopelor (r_w), rapoartele reale de transmitere față/spate, distribuția cuplului între punți și cuplul continuu al motoarelor."',
+    T(q("1. La v_max = "), n0("v_max"), q(" km/h pe drum orizontal sunt necesari F_t = "), n0(f"{S}E{R['ft']}"),
+      q(" N la roți, adică P_m = "), n0(f"{S}E{R['pm']}"), q(" kW – doar "), pct(f"{S}E{R['load_c']}"),
+      q(" din puterea continuă; "), pct(f"{S}E{R['fra']}/{S}E{R['ft']}"),
+      q(" din rezistență este aerodinamică. Viteza maximă nu este limitată de putere (cu puterea continuă ar fi posibilă teoretic ≈ "),
+      n0(f"{S}E{DROW['D5']}"), q(" km/h), ci electronic, conform datelor oficiale. Turația de "), n0("n_m_vmax"),
+      q(" rot/min la v_max este o dată de intrare (folosită pentru estimarea i_g), nu un rezultat al calculului.")),
+    T(q("2. Accelerarea 0–"), n0("v_acc"), q(" km/h în "), nd("t_acc", 1), q(" s cere o forță de "), n0(f"{S}F{R['ft']}"),
+      q(" N la pornire, deci μ ≥ "), nd(f"{S}F{R['munec']}", 2), q(". Cu μ = "), nd("mu_us", 2),
+      q(" (asfalt uscat, tabelul cursului) se pot transmite doar "), n0(f"{S}F{R['adh']}"), q(" N din cei "),
+      n0(f"{S}F{R['fdrive']}"), q(" N pe care îi poate furniza acționarea, iar timpul minim estimat este "),
+      nd(IND["t100_us"], 1), q(" s: accelerarea este limitată de aderență, nu de acționare.")),
+    T(q("3. Timpul oficial de "), nd("t_acc", 1), q(" s se obține numai cu μ ≈ "), nd(f"{S}F{R['munec']}", 2),
+      q(" (anvelope sport pe asfalt uscat, peste valorile din tabelul cursului); cu μ = "), nd("mu_perf", 2),
+      q(" modelul dă "), nd(IND["t100_perf"], 2),
+      q(" s – aceasta este o calibrare a lui μ, nu o verificare independentă. Raza r_w și raportul i_g nu influențează forțele, puterile și timpii, deoarece i_g este calculat din r_w; ele afectează doar T_w și n_w.")),
+    T(q("4. Peste ≈ "), n0(f"{S}E{DROW['D8']}"), q(" km/h accelerarea este limitată de putere. Cu P_vârf = "), n0("P_vf"),
+      q(" kW (η·P = "), n0("eta_t*P_vf"), q(" kW la roți) modelul dă 0–200 km/h în "), nd(IND["t200_perf"], 2),
+      q(" s, cu "), pct(f"1-{IND['t200_perf']}/t_200"), q(" mai repede decât valoarea oficială de "), nd("t_200", 1),
+      q(" s; timpul oficial se obține cu o putere medie disponibilă de ≈ "), n0("P_cal"), q(" kW ("),
+      nd(IND["t200_cal"], 2),
+      q(" s). Cauze posibile: puterea de vârf nu este disponibilă integral pe tot intervalul 100–200 km/h, randamentul real scade la turații mari, iar masele în rotație au fost neglijate (δ = 1, rel. 23).")),
+    T(q("5. La "), n0("v_acc"), q(" km/h, accelerația medie impusă ("), nd("a_med", 2), q(" m/s²) ar cere P_m = "),
+      n0(f"{S}G{R['pm']}"), q(" kW ("), pct(f"{S}G{R['load_p']}"),
+      q(" din puterea de vârf): accelerația reală scade odată cu viteza, iar puterea de vârf este necesară doar pentru performanța maximă (Launch Control).")),
+    T(q("6. Rampa de "), n0("p_1"), q(" % la "), n0("v_p1"), q(" km/h cere "), n0(f"{S}H{R['pm']}"),
+      q(" kW, iar pornirea pe panta de "), n0("p_max"), q(" % cere "), n0(f"{S}I{R['ft']}"), q(" N (μ necesar "),
+      nd(f"{S}I{R['munec']}", 2), q("): ambele condiții sunt îndeplinite cu rezervă mare.")),
+    T(q("7. Date de confirmat în etapele următoare: dimensiunea anvelopelor (r_w), rapoartele reale de transmitere față/spate, distribuția cuplului între punți (cap. 10, rel. 39), cuplul continuu al motoarelor și curba reală a puterii de vârf în funcție de viteză.")),
 ]
 for k, f in enumerate(concl):
     row = c0 + 1 + k
@@ -511,7 +577,7 @@ for k, f in enumerate(concl):
     cell.font = F_BASE
     cell.alignment = WRAP
     rs.merge_cells(start_row=row, start_column=1, end_row=row, end_column=14)
-    rs.row_dimensions[row].height = 42
+    rs.row_dimensions[row].height = 44
 
 for c, w in enumerate([7, 40, 9, 10, 9, 11, 11, 10, 10, 10, 11, 9, 15, 11], 1):
     rs.column_dimensions[get_column_letter(c)].width = w

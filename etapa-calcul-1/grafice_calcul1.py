@@ -35,7 +35,7 @@ rows = [r for r in ts.iter_rows(min_row=5, values_only=True) if isinstance(r[0],
 col = lambda i: [r[i] for r in rows]
 v = col(0)
 F_rez0, F_rez10, F_vf, F_cont, F_us, F_perf = col(4), col(5), col(6), col(7), col(8), col(9)
-t_us, t_perf = col(14), col(15)
+t_us, t_perf, t_cal = col(14), col(15), col(23)
 P0, P10, Pvf, Pc = col(16), col(17), col(18), col(19)
 names = {dn: wb.defined_names[dn] for dn in wb.defined_names}
 
@@ -45,7 +45,7 @@ def nv(n):
     return wb[sheet.strip("'")][ref.replace("$", "")].value
 
 
-t_acc, t_200 = nv("t_acc"), nv("t_200")
+t_acc, t_200, P_cal = nv("t_acc"), nv("t_200"), nv("P_cal")
 
 
 def end_label(ax, x, y, text, color, dy=0, ha="left"):
@@ -98,7 +98,8 @@ fig.savefig(os.path.join(OUT_DIR, "fig_puteri.png"), dpi=150)
 # 3. Accelerare
 fig, ax = plt.subplots(figsize=(8.4, 5.0))
 ax.plot(t_us, v, color=C[0], label="model, μ = 0,85 (asfalt uscat)")
-ax.plot(t_perf, v, color=C[1], label="model, μ = 1,20 (anvelope de performanță)")
+ax.plot(t_perf, v, color=C[1], label="model, μ = 1,20, P$_{vârf}$ = 860 kW")
+ax.plot(t_cal, v, color=C[2], label=f"model, μ = 1,20, P$_{{cal}}$ = {P_cal:.0f} kW (calibrat pe 0–200)")
 ax.plot([t_acc, t_200], [100, 200], "o", ms=8, color=INK, mfc=SURF, mew=2, label="date oficiale (0–100 / 0–200 km/h)")
 i100, i200 = v.index(100), v.index(200)
 for t, vv, color, dx, dy, ha in [(t_us[i100], 100, C[0], 8, -4, "left"), (t_perf[i100], 100, C[1], -8, 10, "right"),
@@ -106,9 +107,12 @@ for t, vv, color, dx, dy, ha in [(t_us[i100], 100, C[0], 8, -4, "left"), (t_perf
     ax.plot([t], [vv], "o", ms=6, color=color)
     ax.annotate(f"model {t:.2f} s".replace(".", ","), (t, vv), xytext=(dx, dy), textcoords="offset points",
                 fontsize=8.5, color=INK, ha=ha)
-for t, vv in [(t_acc, 100), (t_200, 200)]:
-    ax.annotate(f"oficial {t:.1f} s".replace(".", ","), (t, vv), xytext=(8, -12), textcoords="offset points",
-                fontsize=8.5, color=INK)
+ax.annotate(f"oficial {t_acc:.1f} s".replace(".", ","), (t_acc, 100), xytext=(8, -12), textcoords="offset points",
+            fontsize=8.5, color=INK)
+ax.plot([t_cal[i200]], [200], "o", ms=6, color=C[2])
+ax.annotate(f"oficial {t_200:.1f} s\nmodel cu P$_{{cal}}$: {t_cal[i200]:.2f} s".replace(".", ","), (t_200, 200),
+            xytext=(8.4, 135), textcoords="data", fontsize=8.5, color=INK,
+            arrowprops=dict(arrowstyle="-", color=INK2, lw=0.8, shrinkA=2, shrinkB=6))
 ax.set_xlim(0, 15)
 ax.set_ylim(0, 310)
 ax.xaxis.set_major_formatter(ro1)
