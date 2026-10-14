@@ -14,6 +14,8 @@ Fișierul de lucru este [`CCA_Etapa1_Documentare.xlsx`](CCA_Etapa1_Documentare.x
 
 Fișierul se regenerează cu `python3 build_etapa1.py CCA_Etapa1_Documentare.xlsx`.
 
+Etapa următoare (calculele P2 / P3 – puterea mașinii electrice, energia și bateria): [`../etapa2-calcule`](../etapa2-calcule/README.md).
+
 ## Tabel comparativ (rezumat)
 
 | Producător | Model | Stadiu | v_max [km/h] | P_max [kW] | Cuplu [Nm] | Motoare | Baterie [kWh] | U [V] |
