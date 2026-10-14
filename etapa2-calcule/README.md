@@ -273,6 +273,15 @@ celule cilindrice; restul este carcasă, răcire, BMS și conexiuni). Limita de 
 | Convertor / invertor | Curent maxim din baterie | 811 A | 847 A |
 <!-- /AUTO:sinteza -->
 
+## Legătura cu calculul de dinamică din `etapa-calcul-1`
+
+Folderul [`../etapa-calcul-1`](../etapa-calcul-1/README.md) calculează dinamica longitudinală a GT 63 cu relațiile din
+cursul C1 și cu alte ipoteze: masa UE cu șofer (2535 kg), ρ = 1,225 kg/m³, f = 0,012, µ = 0,85 / 1,20, r = 0,345 m,
+randamentul transmisiei 0,95. Aici se folosesc exemplele din suporturile P2/P3 (masa DIN 2460 kg din tabelul etapei 1,
+ρ = 1,293 kg/m³, µf = 0,013, µa = 0,8, r = 0,35 m, Pp = 1 %), de aceea valorile diferă puțin. Concluziile coincid:
+accelerarea din datele oficiale cere µ ≈ 1,2 (adică este limitată de aderență), iar la v_max puterea necesară
+(≈ 230 kW la GT 63) este mult sub puterea continuă de 530 kW.
+
 ## Observații pentru etapele următoare
 
 - **Etapa 4 (schema acționării):** puterea și cuplul de mai sus se împart pe motoare (de exemplu 1 față + 2 spate, ca la
