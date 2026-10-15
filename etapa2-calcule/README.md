@@ -40,7 +40,7 @@ nu are erori de formulă. Calculele au fost verificate și independent, pas cu p
 | Mărime | Valoare | Justificare |
 |---|---|---|
 | g | 9,81 m/s² | valoare uzuală (g_n = 9,806 65 m/s²) |
-| ρ (densitatea aerului) | 1,293 kg/m³ | „condiții normale” (0 °C, 101 325 Pa): ρ = p/(R·T) = 101 325/(287,05 · 273,15); la 15 °C (atmosfera standard ISA) ρ = 1,225 kg/m³ – vezi sensibilitatea |
+| ρ (densitatea aerului) | 1,293 kg/m³ | „condiții normale” (0 °C, 101 325 Pa): ρ = p/(R·T) = 101 325/(287,05 · 273,15) ≈ 1,292 kg/m³; s-a folosit valoarea tabelată uzuală 1,293 kg/m³ (diferență 0,06 %); la 15 °C (atmosfera standard ISA) ρ = 1,225 kg/m³ – vezi sensibilitatea |
 | µf (frecare la rulare) | 0,013 | exemplul din curs; relația f = 0,01·(1 + V/160) (Ehsani) dă 0,013 la 50 km/h |
 | µa (aderență) | 0,8 | exemplul din curs; corespunde asfaltului uscat la ≈ 90 km/h (0,85 la 50 km/h); anvelopele bune ajung pe asfalt uscat la 1,0–1,2 – vezi sensibilitatea |
 | α, Vv | 0, 0 | drum drept, fără vânt (simplificările din curs) |
@@ -49,7 +49,7 @@ nu are erori de formulă. Calculele au fost verificate și independent, pas cu p
 | Va | 100 km/h | punct pe rampa de accelerare: sfârșitul probei 0–100 km/h din documentare |
 | n_max (turația maximă a mașinii la v_max) | 15 000 rot/min | alegere de proiectare; motoarele clasei: GT 63 > 13 000 rot/min (spate) / > 15 000 rot/min (față), Xiaomi V8s 27 200 rot/min |
 | V1, η, rezervă | 50 km/h, 80 %, 30 % | curs (P3); η = 80 % corespunde pierderilor de 15–20 % ale acționării electrice pe ciclurile de omologare |
-| U_bat,max admis | 850 V | clasa „800 V”: tensiunea maximă a invertoarelor și motoarelor este 800–850 V (YASA 800 V, EMRAX 830 V, Turntide 850 V); bateriile reale au 700–800 V nominal (Lotus Emeya 705 V) |
+| U_bat,max admis | 800 V | tensiunea maximă admisă este minimul tensiunilor admise de componente; motoarele YASA alese sunt date pentru 400–800 V (alte motoare ale clasei: EMRAX 830 V, Turntide 850 V); bateriile reale au 700–800 V nominal (Lotus Emeya 705 V) |
 | Masa bateriei | ≤ 30 % din M | curs (P3, slide 9) |
 
 ## P2 – Datele din documentare
@@ -151,10 +151,11 @@ sfârșitul probei 0–100 km/h) – puterea maximă – apoi la v_max constant�
    timpii măsurați cu „1-foot rollout”. Tracțiunea integrală nu este o cauză: relația Fa = µa·M·g presupune deja că
    toată greutatea vehiculului este pe roți motoare.
 2. **Verificarea coerenței:** cu accelerația din documentare (fără limita de aderență), aceleași formule dau
-   Pax ≈ 838 kW față de puterea declarată de 870,9 kW (diferență ≈ 4 %) și Max ≈ 1 685 Nm față de cuplul declarat de
-   1 575 Nm (≈ 7 %). Datele din documentare sunt deci coerente între ele. Diferența dintre puterea declarată și
-   P_max calculată (≈ 519 kW), respectiv dintre cuplul declarat și Max (≈ 1 043 Nm), provine aproape în întregime din
-   limitarea de aderență (µa = 0,8).
+   Pax ≈ 838 kW față de puterea declarată de 870,9 kW (diferență ≈ 4 %), deci datele din documentare sunt coerente
+   între ele. Diferența dintre puterea declarată și P_max calculată (≈ 519 kW) provine aproape în întregime (≈ 91 %) din
+   limitarea de aderență (µa = 0,8). Cuplul la ax nu poate fi folosit ca verificare: Max = Pax/Ωax depinde de turația
+   n_max aleasă (Max ∝ 1/n_max); cu a_doc el ar fi ≈ 1 685 Nm la n_max = 15 000 rot/min, dar ≈ 1 264 Nm la 20 000 rot/min,
+   față de 1 575 Nm declarat.
 3. **Puterea nominală** (rulare cu v_max) este dominată de rezistența aerodinamică: Fra(v_max) ≈ 91 % din Ft. Aderența
    este respectată la v_max cu o rezervă mare (Ft ≈ 3,4 kN față de Fa ≈ 18,5 kN).
 4. **Reductorul:** cu n_max = 15 000 rot/min la v_max rezultă i_rd ≈ 0,16, adică 1/i_rd ≈ 6,3, apropiat de valorile
@@ -187,9 +188,11 @@ Suportul P2 tratează două variante: **MCC** (mașină de curent continuu, alim
 din documentare folosesc **mașini sincrone cu magneți permanenți** (MCA), de aceea tema folosește varianta MCA:
 
 - **convertorul** este un invertor trifazat DC–AC (tranzistoare SiC, ca la vehiculele clasei), alimentat direct din
-  bateria de 505–848 V;
-- **tensiunea de alimentare a motorului**: cu modulație vectorială, tensiunea de linie maximă (valoare efectivă) este
-  Um ≈ U_bat / √2, adică ≈ 357 V la bateria descărcată și ≈ 514 V la tensiunea nominală;
+  bateria de 475–798 V;
+- **tensiunea de alimentare a motorului**: în domeniul liniar al modulației vectoriale, valoarea efectivă a fundamentalei
+  tensiunii de linie este cel mult Um ≈ U_bat / √2, adică ≈ 336 V la bateria descărcată și ≈ 484 V la tensiunea
+  nominală; cu supramodulație (până la regimul de șase pulsuri, folosit la slăbirea de câmp) se ajunge la
+  ≈ 0,78 · U_bat (≈ 370 V, respectiv ≈ 533 V);
 - **frecvența de alimentare** este fm = p · n / 60 (p = numărul de perechi de poli): de exemplu, cu p = 4, fm = 1 000 Hz
   la n_max = 15 000 rot/min și ≈ 317 Hz la turația de bază.
 
@@ -206,29 +209,33 @@ din cataloage (valori de vârf / continue din fișele producătorilor):
 | EMRAX 348 LV LC (flux axial, MP, p = 10) | 340 / 160 | 1 000 | 4 500 | 100–830 V | 43,9 | 1,88 | 1 861 |
 | Equipmake APM-200 (MP cu rotor „spoke”) | 220 / – | 450 | 10 000 | 750 V (invertor) | 42,0 | 4,18 | 1 861 |
 
-Cerințe (vehicul mediu, tot vehiculul): P_max = 519 kW, P_nom = 299 kW, cuplul la roți Mr = r·Ft = 6 471 Nm; turația roții la v_max = 2 394 rot/min. Fiecare motor are propriul reductor, ales astfel încât n_max să corespundă lui v_max: 1/i_rd = n_max / 2 394; cuplul la roți = M_vârf · (1/i_rd) · 0,99.
+Cerințe (vehicul mediu, tot vehiculul): P_max = 519 kW, P_nom = 299 kW, cuplul la roți Mr = r·Fa = 6 471 Nm; turația roții la v_max = 2 394 rot/min. Fiecare motor are propriul reductor, ales astfel încât n_max să corespundă lui v_max: 1/i_rd = n_max / 2 394; cuplul la roți = M_vârf · (1/i_rd) · 0,99.
 
-| Configurație | P vârf [kW] | P continuă [kW] | Cuplu la roți [Nm] | Masă motoare [kg] | Verificare |
+Aderența se verifică **pe fiecare punte**: la accelerarea cu a = 7,59 m/s² sarcina se transferă spre spate (repartiție statică 50/50, h/L ≈ 0,17), deci puntea față poartă 36,8 % din greutate și poate transmite cel mult 2 384 Nm, iar puntea spate 63,2 % și 4 087 Nm. Motoarele fiecărei punți trebuie să atingă aceste cupluri, altfel aderența punții respective nu este folosită și accelerația scade.
+
+| Configurație | P vârf [kW] | P continuă [kW] | Cuplu la roți față / spate [Nm] (necesar 2 384 / 4 087) | Masă motoare [kg] | Verificare |
 |---|---|---|---|---|---|
-| 1 × YM360 (față) + 2 × YM720 (spate) | 825 ✓ | 418 ✓ | 7 129 ✓ | 90,0 | **îndeplinește toate cerințele** |
-| 3 × YM720 (1 față + 2 spate) | 1 050 ✓ | 540 ✓ | 8 684 ✓ | 99,0 | **îndeplinește toate cerințele** |
-| 2 × YM720 (spate) | 700 ✓ | 360 ✓ | 5 789 ✗ | 66,0 | nu îndeplinește toate cerințele |
-| 2 × AF300D | 1 296 ✓ | 292 ✗ | 5 985 ✗ | 115,6 | nu îndeplinește toate cerințele |
+| 3 × YM720 (1 față + 2 spate) | 1 050 ✓ | 540 ✓ | 2 895 ✓ / 5 789 ✓ | 99,0 | **îndeplinește toate cerințele** |
+| 1 × YM360 (față) + 2 × YM720 (spate) | 825 ✓ | 418 ✓ | 1 340 ✗ / 5 789 ✓ | 90,0 | nu îndeplinește toate cerințele |
+| 2 × YM720 (spate) | 700 ✓ | 360 ✓ | 0 ✗ / 5 789 ✓ | 66,0 | nu îndeplinește toate cerințele |
+| 2 × AF300D (1 față + 1 spate) | 1 296 ✓ | 292 ✗ | 2 992 ✓ / 2 992 ✗ | 115,6 | nu îndeplinește toate cerințele |
 <!-- /AUTO:motoare -->
 
 **Concluzii din comparația cu cataloagele**
 
-- Configurația **1 × YASA YM360 (față) + 2 × YASA YM720 (spate)** îndeplinește toate cerințele (putere de vârf, putere
-  continuă și cuplu la roți), cu ≈ 90 kg de motoare, și are aceeași dispunere ca GT 63 (motoare cu flux axial YASA,
-  1 față + 2 spate). Două motoare nu sunt suficiente pentru cuplul la roți.
+- Configurația **3 × YASA YM720 (1 față + 2 spate)** îndeplinește toate cerințele (putere de vârf, putere continuă și
+  cuplul la roți pe fiecare punte), cu 99 kg de motoare, și are aceeași dispunere ca GT 63 (motoare cu flux axial YASA,
+  1 față + 2 spate).
+- Varianta 1 × YM360 (față) + 2 × YM720 (spate) are destul cuplu în total (7 129 Nm), dar motorul din față este prea mic
+  pentru aderența punții față: puntea spate ar trebui să transmită singură restul forței, ceea ce ar cere ≈ 79 % din
+  greutate pe spate. Cu 2 motoare nu se ating cuplul pe ambele punți sau puterea continuă.
 - Motoarele cu flux axial din cataloage au turații maxime de 4 500–10 000 rot/min, mai mici decât n_max = 15 000 rot/min
-  ales în P2. Pentru motoarele YASA alese reductoarele au 1/i_rd ≈ 3,8–4,2 (nu 6,3), iar cuplul cerut motoarelor crește
-  în aceeași proporție.
+  ales în P2. Pentru motoarele YM720 reductoarele au 1/i_rd ≈ 4,2 (nu 6,3), iar cuplul cerut motoarelor crește în
+  aceeași proporție.
   Doar motoarele radiale de turație mare (Helix SPM177, 25 000 rot/min) permit 1/i_rd ≥ 6,3. Raportul final se alege la
   etapa 4, odată cu motorul.
-- **Tensiunea:** YASA declară 400–800 V; bateria de 202 celule în serie ajunge la 848 V complet încărcată. Pentru aceste
-  motoare fie tensiunea maximă se confirmă cu furnizorul, fie se reduce Ns la floor(800 V / 4,2 V) = 190 de celule în
-  serie (684 V nominal).
+- **Tensiunea:** YASA declară 400–800 V, de aceea bateria are 190 de celule în serie (cel mult 798 V complet
+  încărcată, 684 V nominal).
 
 ## P3 – Necesarul de energie electrică (pașii 1–14)
 
@@ -280,11 +287,15 @@ Vti sunt constante:
 - W01 = Σ(i = 1…n+1) Pti·Δt, cu P(t_1) = 0, folosește valorile de la **sfârșitul** intervalelor ⇒ W01 **supraestimează**
   energia.
 
+Notația [Δt(i−1), Δt(i)] de pe slide-ul 5 ar asocia Fti sfârșitului intervalului; cu Σ(i = 1…n) și t_1 = 0 se obțin
+însă valorile de la început. S-a păstrat forma sumelor din curs; varianta cu valorile de la sfârșit dă
+P01-med = W01/t1 = 129,41 kW (n = 100), respectiv 128,25 kW (n = 1000), adică puțin peste Pmed.
+
 <!-- AUTO:discretizare -->
 | n | Δt [ms] | P01-med [kW] | W01-med [kJ] (eroare) | W01 [kJ] (eroare) | timp Octave [µs] | timp Python [µs] |
 |---|---|---|---|---|---|---|
-| 100 | 18,066 | 126,840 | 229,151 (−1,002 %) | 233,791 (+1,002 %) | 169 | 31 |
-| 1000 | 1,807 | 127,995 | 231,239 (−0,100 %) | 231,703 (+0,100 %) | 200 | 43 |
+| 100 | 18,066 | 126,840 | 229,151 (−1,002 %) | 233,791 (+1,002 %) | 119 | 47 |
+| 1000 | 1,807 | 127,995 | 231,239 (−0,100 %) | 231,703 (+0,100 %) | 193 | 55 |
 | exact | – | 128,124 | 231,471 | 231,471 | – | – |
 | Pmed = P1/2 | – | 128,391 | Wmed = 231,954 (+0,209 %) | – | – | – |
 <!-- /AUTO:discretizare -->
@@ -317,8 +328,8 @@ Celula aleasă: **Molicel INR-21700-P50B** (fișa tehnică oficială v1.1): 3,6 
 Sports Cars”.
 
 - celulele **în serie** dau tensiunea; se pun cât mai multe, dar bateria complet încărcată nu trebuie să depășească
-  tensiunea maximă admisă de invertor și de motoare (850 V): Ns = floor(850 V / 4,2 V) = 202 ⇒ U = 727 V nominal
-  (505–848 V), în aceeași gamă cu bateriile reale ale clasei (Lotus Emeya 705 V nominal);
+  tensiunea maximă admisă de motoare și de invertor (800 V): Ns = floor(800 V / 4,2 V) = 190 ⇒ U = 684 V nominal
+  (475–798 V), în aceeași gamă cu bateriile reale ale clasei (Lotus Emeya 705 V nominal);
 - celulele **în paralel** dau curentul și capacitatea: Np = max(Np din energie, Np din curent);
 - curentul cel mai mare apare la tensiunea minimă (baterie aproape descărcată): I = P_max / (η · U_min), unde
   P_max este puterea maximă la ax din P2 și η = 80 %.
@@ -329,32 +340,32 @@ Sports Cars”.
 | Energia necesară Wbat | 104,38 kWh | 122,02 kWh |
 | W_celulă = Cap·U | 64 800 Ws (18,0 Wh) | idem |
 | N_min = Wbat / W_celulă | 5 799 | 6 779 |
-| Celule în serie Ns = floor(850 V / 4,2 V) | 202 | 202 |
-| Tensiune nominală (min – max) | 727,2 V (505 – 848 V) | 727,2 V |
-| Ramuri în paralel: din energie / din curent | 29 / 22 | 34 / 23 |
-| **Configurație** | **202s29p = 5 858 celule** | **202s34p = 6 868 celule** |
-| Energie instalată / capacitate | 105,44 kWh / 145 Ah | 123,62 kWh / 170 Ah |
-| Curentul bateriei la P_max: la U_nom / la U_min | 892 A / 1 284 A | 931 A / 1 341 A |
-| Curent pe celulă la P_max și U_min (max. 60 A) | 44,3 A | 39,4 A |
-| Curent pe celulă la puterea declarată: U_nom / U_min | 51,6 A / 74,3 A | 43,5 A / 62,6 A |
-| Masa celulelor | 415,9 kg (17,7 % din M) | 487,6 kg (19,8 %) |
-| Masa estimată a pachetului (celule / 0,63) | 660,2 kg (28,0 %) | 774,0 kg (31,5 %) |
+| Celule în serie Ns = floor(800 V / 4,2 V) | 190 | 190 |
+| Tensiune nominală (min – max) | 684,0 V (475 – 798 V) | 684,0 V |
+| Ramuri în paralel: din energie / din curent | 31 / 23 | 36 / 24 |
+| **Configurație** | **190s31p = 5 890 celule** | **190s36p = 6 840 celule** |
+| Energie instalată / capacitate | 106,02 kWh / 155 Ah | 123,12 kWh / 180 Ah |
+| Curentul bateriei la P_max: la U_nom / la U_min | 948 A / 1 365 A | 990 A / 1 426 A |
+| Curent pe celulă la P_max și U_min (max. 60 A) | 44,0 A | 39,6 A |
+| Curent pe celulă la puterea declarată: U_nom / U_min | 51,3 A / 73,9 A | 43,7 A / 62,9 A |
+| Masa celulelor | 418,2 kg (17,8 % din M) | 485,6 kg (19,7 %) |
+| Masa estimată a pachetului (celule / 0,63) | 663,8 kg (28,2 %) | 770,9 kg (31,3 %) |
 | Limita 30 % din M | 706,7 kg – respectată | 738,0 kg – DEPĂȘITĂ |
 <!-- /AUTO:baterie -->
 
-- **Np este impus de energie** (29 de ramuri pentru vehiculul mediu), nu de curent (22 de ramuri la 60 A). De aceea
-  celulele de 5 Ah cu 45 A (Samsung SDI 50S, 29 de ramuri din curent) ar da aceeași configurație 202s29p, iar Molicel
-  P45B (4,5 Ah) ar cere 32 de ramuri din cauza capacității mai mici. P50B a fost aleasă pentru rezerva de curent
+- **Np este impus de energie** (31 de ramuri pentru vehiculul mediu), nu de curent (23 de ramuri la 60 A). De aceea
+  celulele de 5 Ah cu 45 A (Samsung SDI 50S, 31 de ramuri din curent) ar da aceeași configurație 190s31p, iar Molicel
+  P45B (4,5 Ah) ar cere 34 de ramuri din cauza capacității mai mici. P50B a fost aleasă pentru rezerva de curent
   (≈ 44 A/celulă din 60 A
   admiși, chiar la tensiunea minimă) și pentru rezistența internă publicată.
-- **Puterea declarată a clasei (≈ 871 kW)** ar cere ≈ 52 A/celulă la tensiunea nominală, dar ≈ 74 A/celulă la
+- **Puterea declarată a clasei (≈ 871 kW)** ar cere ≈ 51 A/celulă la tensiunea nominală, dar ≈ 74 A/celulă la
   tensiunea minimă – peste limita de 60 A. Bateria dimensionată pentru P_max calculat nu poate livra puterea de vârf
   declarată când este aproape descărcată; vehiculele reale limitează și ele puterea la stare de încărcare scăzută.
 - **Masa:** celulele cântăresc ≈ 18 % din masa vehiculului. Masa pachetului (celule + carcasă, răcire, BMS, conexiuni) se
   estimează împărțind masa celulelor la raportul celule/pachet: mediana pachetelor NMC actuale este ≈ 0,63 (intervalul
   tipic pentru celule cilindrice 0,55–0,70). Cu 0,63, pachetul vehiculului mediu are ≈ 28 % din masa vehiculului –
   **limita de 30 % este respectată, dar cu rezervă mică**: ar fi depășită pentru un raport sub ≈ 0,59. Pentru GT 63 (122 kWh
-  necesari) pachetul ar avea ≈ 31,5 % din masă, peste limită – bateria reală a GT 63 are 106 kWh net.
+  necesari) pachetul ar avea ≈ 31 % din masă, peste limită – bateria reală a GT 63 are 106 kWh net.
 
 ## Sinteză – date pentru proiectare
 
@@ -364,18 +375,18 @@ Sports Cars”.
 | Mașina electrică | Tip | MCA – mașină sincronă cu magneți permanenți (PMSM) | idem |
 | | Puterea maximă / nominală | 519 kW / 299 kW | 542 kW / 229 kW |
 | | Cuplul maxim la ax | 1 043 Nm | 1 035 Nm |
-| | Turația de bază / maximă | 4 748 / 15 000 rot/min | 5 000 / 15 000 rot/min |
+| | Turația de bază / maximă (ipoteza P2: n_max = 15 000 rot/min) | 4 748 / 15 000 rot/min | 5 000 / 15 000 rot/min |
+| | Motoare din catalog (exemplu) | YASA 3 × YM720 (1 față + 2 spate); cu motoarele YASA: n_max 10 000 rot/min, 1/i_rd ≈ 4,2, U_dc ≤ 800 V (vezi comparația) | – |
 | Reductor | i_rd = Ωr/Ωax; n_motor/n_roată = 1/i_rd | 0,1596; 6,27 | 0,1516; 6,60 |
 | Vehicul | a realizabil / 0–100 km/h | 7,59 m/s² / 3,66 s | 7,61 m/s² / 3,65 s |
-| Baterie | Energie necesară / instalată | 104,4 / 105,4 kWh | 122,0 / 123,6 kWh |
-| | Celule Molicel P50B | 202s29p = 5 858 | 202s34p = 6 868 |
-| | Tensiune nominală (min – max) | 727 V (505 – 848 V) | idem |
-| | Masa celulelor / pachetului (estimare) | 416 / 660 kg | 488 / 774 kg |
-| | Motoare din catalog (exemplu, YASA) | 1 × YM360 (față) + 2 × YM720 (spate) | – |
+| Baterie | Energie necesară / instalată | 104,4 / 106,0 kWh | 122,0 / 123,1 kWh |
+| | Celule Molicel P50B | 190s31p = 5 890 | 190s36p = 6 840 |
+| | Tensiune nominală (min – max) | 684 V (475 – 798 V) | idem |
+| | Masa celulelor / pachetului (estimare) | 418 / 664 kg | 486 / 771 kg |
 | Convertor / invertor | Tip | invertor trifazat DC–AC (tranzistoare SiC), alimentat direct din baterie | idem |
-| | Tensiunea continuă de intrare U_bat | 505 – 848 V | idem |
-| | Tensiunea de linie maximă Um = U_bat/√2 (la U_min / U_nom) | 357 / 514 V | idem |
-| | Curentul din baterie la P_max (U_nom / U_min) | 892 / 1 284 A | 931 / 1 341 A |
+| | Tensiunea continuă de intrare U_bat | 475 – 798 V | idem |
+| | Um max. în domeniul liniar = U_bat/√2 (la U_min / U_nom) | 336 / 484 V | idem |
+| | Curentul din baterie la P_max (U_nom / U_min) | 948 / 1 365 A | 990 / 1 426 A |
 <!-- /AUTO:sinteza -->
 
 ## Legătura cu calculul de dinamică din `etapa-calcul-1`
@@ -390,7 +401,7 @@ GT 63) este mult sub puterea continuă de 530 kW.
 ## Observații pentru etapele următoare
 
 - **Etapa 4 (schema acționării):** puterea și cuplul de mai sus se împart pe motoare (de exemplu 1 față + 2 spate, ca la
-  GT 63). Invertorul trebuie să funcționeze pe tot domeniul de tensiune al bateriei, de la 505 V (descărcată) la 848 V
+  GT 63). Invertorul trebuie să funcționeze pe tot domeniul de tensiune al bateriei, de la 475 V (descărcată) la 798 V
   (încărcată), și să suporte curentul de la tensiunea minimă.
 - **Etapa 5 (calcul și simulare):** modelul Simulink poate porni de la funcțiile `forte_rezistente.m`, `calcul_p2.m` și
   `calcul_p3.m`. Pentru GT 63, rapoartele reale ale reductoarelor nu sunt publicate; dimensiunile anvelopelor

@@ -181,7 +181,7 @@ IPOTEZE = [
     ("c_eta", "Randament η_el-mec = η_mec-el", "-", "eta", "Curs, P3 slide 8 (pierderi tipice ale acționării 15–20 %)"),
     ("c_rez", "Rezervă de energie în baterie", "-", "rezerva", "Curs, P3 slide 8"),
     ("c_U_max", "Tensiunea maximă admisă a bateriei", "V", "U_bat_max_admis",
-     "Clasa „800 V”: invertoare / motoare de cel mult 800–850 V (YASA 800 V, EMRAX 830 V, Turntide 850 V)"),
+     "Minimul tensiunilor admise de componente: motoarele YASA alese sunt date pentru 400–800 V"),
     ("c_k_masa", "Masa maximă a bateriei / masa vehiculului", "-", "k_masa_bat", "Curs, P3 slide 9"),
 ]
 CELULA_CAMPURI = [
@@ -370,7 +370,7 @@ def foaie_p3(wb, col, rm, rgt, F2):
             "0")
     F.rand_("a_P2", "2", "Accelerația din sesiunea precedentă (P2: a = Va/ta)", "a", "m/s²",
             [f"={F2.ref('a_doc', 0)}", f"={F2.ref('a_doc', 1)}"],
-            "sesiunea precedentă (P2, pasul 4)", "0.000")
+            "sesiunea precedentă (P2, pasul 2: a = Va/ta); aderența se verifică la V1 (pasul 4)", "0.000")
     F.sectiune("Pașii 1–6: puterea P1 (cu a), P1' (fără a), timpul t1")
     F.rand_("V1", "1", "Viteza constantă a ciclului", "V1", "m/s", "=c_V1_kmh/3.6", "V1 = 50 km/h", "0.0000")
     F.rand_("Ff", "3", "Forța de frecare la rulare", "Ff", "N", "=c_mu_f*{M}*c_g*COS(c_alpha)", "", "0.000")
@@ -443,7 +443,8 @@ def foaie_discretizare(wb, n, F3):
     titlu(ws, f"P3 – discretizarea intervalului [0, t1] în n = {n} intervale egale",
           "Indicii ca în curs (și în Matlab): i = 1 … n+1, t_i = (i − 1)·Δt. P01-med = (1/n)·Σ(i=1..n) Fti·Vti "
           "folosește valorile de la începutul intervalelor; W01 = Σ(i=1..n+1) Pti·Δt, cu P(t_1) = 0, folosește "
-          "valorile de la sfârșitul intervalelor. Cele două sume încadrează valoarea exactă.")
+          "valorile de la sfârșitul intervalelor. Cele două sume încadrează valoarea exactă. (Notația [Δt(i−1), Δt(i)] "
+          "de pe slide-ul 5 ar asocia Fti sfârșitului intervalului; s-a păstrat forma sumelor din curs.)")
     blocuri = (("A", 0, "Vehicul mediu"), ("F", 1, "GT 63"))
     r0 = 9
     for c0, k, et in blocuri:

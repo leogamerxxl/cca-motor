@@ -88,24 +88,32 @@
   ],
   "configuratii": [
     {
-      "nume": "1 × YM360 (față) + 2 × YM720 (spate)",
-      "componente": [
-        [
-          "YM360",
-          1
-        ],
-        [
-          "YM720",
-          2
-        ]
-      ]
-    },
-    {
       "nume": "3 × YM720 (1 față + 2 spate)",
       "componente": [
         [
           "YM720",
-          3
+          1,
+          "fata"
+        ],
+        [
+          "YM720",
+          2,
+          "spate"
+        ]
+      ]
+    },
+    {
+      "nume": "1 × YM360 (față) + 2 × YM720 (spate)",
+      "componente": [
+        [
+          "YM360",
+          1,
+          "fata"
+        ],
+        [
+          "YM720",
+          2,
+          "spate"
         ]
       ]
     },
@@ -114,18 +122,30 @@
       "componente": [
         [
           "YM720",
-          2
+          2,
+          "spate"
         ]
       ]
     },
     {
-      "nume": "2 × AF300D",
+      "nume": "2 × AF300D (1 față + 1 spate)",
       "componente": [
         [
           "AF300D",
-          2
+          1,
+          "fata"
+        ],
+        [
+          "AF300D",
+          1,
+          "spate"
         ]
       ]
     }
-  ]
+  ],
+  "ipoteze_punti": {
+    "h_L": 0.17,
+    "repartitie_statica_fata": 0.5,
+    "nota": "Centrul de greutate h ≈ 0,5 m, ampatament L ≈ 3,0 m (GT 63: 3,04 m) ⇒ h/L ≈ 0,17; repartiție statică 50/50 (ipoteză)."
+  }
 }

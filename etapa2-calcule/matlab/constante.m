@@ -24,6 +24,6 @@ C.rezerva = 0.30;     % [-] rezervă de energie în baterie (curs)
 C.n_pasi = [100 1000];% numărul de pași pentru discretizarea intervalului [0, t1] (curs)
 
 % --- baterie (P3, slide 9) ---
-C.U_bat_max_admis = 850; % [V] tensiunea maximă admisă a bateriei (invertoare / motoare din clasa „800 V”)
+C.U_bat_max_admis = 800; % [V] tensiunea maximă admisă = minimul componentelor (motoare YASA: 400–800 V)
 C.k_masa_bat   = 0.30;% [-] masa bateriei <= 30 % din masa vehiculului (curs)
 end

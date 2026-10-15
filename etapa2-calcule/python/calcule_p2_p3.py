@@ -32,7 +32,7 @@ RADACINA = AICI.parent
 C = dict(g=9.81, rho=1.293, mu_f=0.013, mu_a=0.8, alpha=0.0, Vv=0.0,
          r=0.35, pp=0.01, Va_kmh=100.0, n_max=15000.0,
          V1_kmh=50.0, eta=0.80, rezerva=0.30, n_pasi=[100, 1000],
-         U_bat_max_admis=850.0, k_masa_bat=0.30)
+         U_bat_max_admis=800.0, k_masa_bat=0.30)
 
 # Aceeași celulă ca matlab/celula_aleasa.m
 CELULA = None  # completat din celula_aleasa.json
@@ -598,7 +598,7 @@ def tabele_readme(tab, rez, mat=None):
             f"| Energia necesară Wbat | {ro(m['p3']['Wbat_kWh'], 2)} kWh | {ro(g['p3']['Wbat_kWh'], 2)} kWh |",
             f"| W_celulă = Cap·U | {ro(Bm['W_celula'], 0)} Ws ({ro(Bm['W_celula']/3600, 1)} Wh) | idem |",
             f"| N_min = Wbat / W_celulă | {ro(Bm['N_min'], 0)} | {ro(Bg['N_min'], 0)} |",
-            f"| Celule în serie Ns = floor(850 V / 4,2 V) | {Bm['Ns']} | {Bg['Ns']} |",
+            f"| Celule în serie Ns = floor(800 V / 4,2 V) | {Bm['Ns']} | {Bg['Ns']} |",
             f"| Tensiune nominală (min – max) | {ro(Bm['U_nom'], 1)} V ({ro(Bm['U_min'], 0)} – {ro(Bm['U_max'], 0)} V) | "
             f"{ro(Bg['U_nom'], 1)} V |",
             f"| Ramuri în paralel: din energie / din curent | {Bm['Np_energie']} / {Bm['Np_curent']} | "
@@ -626,8 +626,11 @@ def tabele_readme(tab, rez, mat=None):
             f"| | Puterea maximă / nominală | {ro(P2m['P_max']/1e3, 0)} kW / {ro(P2m['P_nom']/1e3, 0)} kW | "
             f"{ro(P2g['P_max']/1e3, 0)} kW / {ro(P2g['P_nom']/1e3, 0)} kW |",
             f"| | Cuplul maxim la ax | {ro(P2m['Max'], 0)} Nm | {ro(P2g['Max'], 0)} Nm |",
-            f"| | Turația de bază / maximă | {ro(P2m['n_ax_Va'], 0)} / {ro(C['n_max'], 0)} rot/min | "
+            f"| | Turația de bază / maximă (ipoteza P2: n_max = 15 000 rot/min) | {ro(P2m['n_ax_Va'], 0)} / "
+            f"{ro(C['n_max'], 0)} rot/min | "
             f"{ro(P2g['n_ax_Va'], 0)} / {ro(C['n_max'], 0)} rot/min |",
+            ("| | Motoare din catalog (exemplu) | YASA " + MOTOARE_REC + "; cu motoarele YASA: n_max 10 000 rot/min, "
+             "1/i_rd ≈ 4,2, U_dc ≤ 800 V (vezi comparația) | – |" if MOTOARE_REC else ""),
             f"| Reductor | i_rd = Ωr/Ωax; n_motor/n_roată = 1/i_rd | {ro(P2m['i_rd'], 4)}; {ro(P2m['k_rd'], 2)} | "
             f"{ro(P2g['i_rd'], 4)}; {ro(P2g['k_rd'], 2)} |",
             f"| Vehicul | a realizabil / 0–100 km/h | {ro(P2m['a'], 2)} m/s² / {ro(P2m['ta'], 2)} s | "
@@ -639,10 +642,9 @@ def tabele_readme(tab, rez, mat=None):
             f"idem |",
             f"| | Masa celulelor / pachetului (estimare) | {ro(Bm['m_celule'], 0)} / {ro(Bm['m_pachet'], 0)} kg | "
             f"{ro(Bg['m_celule'], 0)} / {ro(Bg['m_pachet'], 0)} kg |",
-            ("| | Motoare din catalog (exemplu, YASA) | " + MOTOARE_REC + " | – |" if MOTOARE_REC else ""),
             "| Convertor / invertor | Tip | invertor trifazat DC–AC (tranzistoare SiC), alimentat direct din baterie | idem |",
             f"| | Tensiunea continuă de intrare U_bat | {ro(Bm['U_min'], 0)} – {ro(Bm['U_max'], 0)} V | idem |",
-            f"| | Tensiunea de linie maximă Um = U_bat/√2 (la U_min / U_nom) | {ro(Bm['U_min']/math.sqrt(2), 0)} / "
+            f"| | Um max. în domeniul liniar = U_bat/√2 (la U_min / U_nom) | {ro(Bm['U_min']/math.sqrt(2), 0)} / "
             f"{ro(Bm['U_nom']/math.sqrt(2), 0)} V | idem |",
             f"| | Curentul din baterie la P_max (U_nom / U_min) | {ro(Bm['I_bat_nom'], 0)} / {ro(Bm['I_bat_max'], 0)} A | "
             f"{ro(Bg['I_bat_nom'], 0)} / {ro(Bg['I_bat_max'], 0)} A |"]
@@ -668,23 +670,34 @@ def tabela_motoare(rez, cale_json):
         rows.append(f"| {mo['producator']} {mo['model']} ({mo['tip']}) | {ro(mo['P_varf_kW'], 0)} / {pc} | "
                     f"{ro(mo['M_varf_Nm'], 0)} | {ro(mo['n_max_rpm'], 0)} | {mo['U_dc']} | {ro(mo['masa_kg'], 1)} | "
                     f"{ro(k_of(mo), 2)} | {ro(Mroata(mo), 0)} |")
+    ip = cat["ipoteze_punti"]
+    tr = R["a"] / C["g"] * ip["h_L"]                         # transferul de sarcină la accelerare
+    f_fata = ip["repartitie_statica_fata"] - tr               # fracțiunea din greutate pe puntea față
+    nec = {"fata": C["r"] * R["Fa"] * f_fata, "spate": C["r"] * R["Fa"] * (1 - f_fata)}
     rows += ["", f"Cerințe (vehicul mediu, tot vehiculul): P_max = {ro(R['P_max']/1e3, 0)} kW, "
-             f"P_nom = {ro(R['P_nom']/1e3, 0)} kW, cuplul la roți Mr = r·Ft = {ro(R['Mr'], 0)} Nm; turația roții la v_max "
+             f"P_nom = {ro(R['P_nom']/1e3, 0)} kW, cuplul la roți Mr = r·Fa = {ro(R['Mr'], 0)} Nm; turația roții la v_max "
              f"= {ro(n_roata, 0)} rot/min. Fiecare motor are propriul reductor, ales astfel încât n_max să corespundă "
              f"lui v_max: 1/i_rd = n_max / {ro(n_roata, 0)}; cuplul la roți = M_vârf · (1/i_rd) · 0,99.", "",
-             "| Configurație | P vârf [kW] | P continuă [kW] | Cuplu la roți [Nm] | Masă motoare [kg] | Verificare |",
-             "|---|---|---|---|---|---|"]
+             f"Aderența se verifică **pe fiecare punte**: la accelerarea cu a = {ro(R['a'], 2)} m/s² sarcina se transferă "
+             f"spre spate (repartiție statică 50/50, h/L ≈ {ro(ip['h_L'], 2)}), deci puntea față poartă "
+             f"{ro(f_fata*100, 1)} % din greutate și poate transmite cel mult {ro(nec['fata'], 0)} Nm, iar puntea spate "
+             f"{ro((1-f_fata)*100, 1)} % și {ro(nec['spate'], 0)} Nm. Motoarele fiecărei punți trebuie să atingă aceste "
+             f"cupluri, altfel aderența punții respective nu este folosită și accelerația scade.", "",
+             f"| Configurație | P vârf [kW] | P continuă [kW] | Cuplu la roți față / spate [Nm] (necesar {ro(nec['fata'], 0)} / "
+             f"{ro(nec['spate'], 0)}) | Masă motoare [kg] | Verificare |", "|---|---|---|---|---|---|"]
     ok = lambda x: "✓" if x else "✗"  # noqa: E731
     for cf in cat["configuratii"]:
-        comp = [(mot[m], n) for m, n in cf["componente"]]
-        pv = sum(mo["P_varf_kW"] * n for mo, n in comp)
-        pc = None if any(mo["P_cont_kW"] is None for mo, _ in comp) else sum(mo["P_cont_kW"] * n for mo, n in comp)
-        mr = sum(Mroata(mo) * n for mo, n in comp)
-        ms = sum(mo["masa_kg"] * n for mo, n in comp)
-        c1, c2, c3 = pv * 1e3 >= R["P_max"], pc is not None and pc * 1e3 >= R["P_nom"], mr >= R["Mr"]
-        rez_ = "**îndeplinește toate cerințele**" if (c1 and c2 and c3) else "nu îndeplinește toate cerințele"
+        comp = [(mot[m], n, ax) for m, n, ax in cf["componente"]]
+        pv = sum(mo["P_varf_kW"] * n for mo, n, _ in comp)
+        pc = None if any(mo["P_cont_kW"] is None for mo, _, _ in comp) else sum(mo["P_cont_kW"] * n for mo, n, _ in comp)
+        mf = sum(Mroata(mo) * n for mo, n, ax in comp if ax == "fata")
+        msp = sum(Mroata(mo) * n for mo, n, ax in comp if ax == "spate")
+        ms = sum(mo["masa_kg"] * n for mo, n, _ in comp)
+        c1, c2 = pv * 1e3 >= R["P_max"], pc is not None and pc * 1e3 >= R["P_nom"]
+        cf_, cs_ = mf >= nec["fata"], msp >= nec["spate"]
+        rez_ = "**îndeplinește toate cerințele**" if (c1 and c2 and cf_ and cs_) else "nu îndeplinește toate cerințele"
         rows.append(f"| {cf['nume']} | {ro(pv, 0)} {ok(c1)} | {'–' if pc is None else ro(pc, 0)} {ok(c2)} | "
-                    f"{ro(mr, 0)} {ok(c3)} | {ro(ms, 1)} | {rez_} |")
+                    f"{ro(mf, 0)} {ok(cf_)} / {ro(msp, 0)} {ok(cs_)} | {ro(ms, 1)} | {rez_} |")
     return "\n".join(rows)
 
 
