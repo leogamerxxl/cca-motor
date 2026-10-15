@@ -13,8 +13,8 @@ B.celula = cel;
 B.W_celula = cel.Cap_Ah * 3600 * cel.U_nom;          % [Ws]
 B.N_min = ceil(Wbat / B.W_celula);                   % numărul minim de celule (energie)
 
-% celule în serie: tensiunea nominală cât mai aproape de ținta de 800 V
-B.Ns = round(C.U_bat_tinta / cel.U_nom);
+% celule în serie: cât mai multe, dar cu tensiunea bateriei complet încărcate <= U_bat_max_admis
+B.Ns = floor(C.U_bat_max_admis / cel.U_max);
 B.U_nom = B.Ns * cel.U_nom;                          % [V]
 B.U_max = B.Ns * cel.U_max;                          % [V] celule complet încărcate
 B.U_min = B.Ns * cel.U_min;                          % [V] celule descărcate

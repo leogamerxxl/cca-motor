@@ -1,0 +1,131 @@
+{
+  "nota": "Valori din paginile / fișele producătorilor, accesate 15.10.2026. Valorile de vârf sunt pentru durate scurte (YASA 30 s, Turntide 20 s, EMRAX 30 s).",
+  "motoare": [
+    {
+      "producator": "YASA",
+      "model": "YM720",
+      "tip": "flux axial",
+      "P_varf_kW": 350,
+      "P_cont_kW": 180,
+      "M_varf_Nm": 700,
+      "M_cont_Nm": 350,
+      "n_max_rpm": 10000,
+      "U_dc": "400–800 V",
+      "masa_kg": 33,
+      "sursa": "https://yasa.com/yasa-series-motors/",
+      "incredere": "O"
+    },
+    {
+      "producator": "YASA",
+      "model": "YM360",
+      "tip": "flux axial",
+      "P_varf_kW": 125,
+      "P_cont_kW": 58,
+      "M_varf_Nm": 360,
+      "M_cont_Nm": 108,
+      "n_max_rpm": 9000,
+      "U_dc": "400–800 V",
+      "masa_kg": 24,
+      "sursa": "https://yasa.com/yasa-series-motors/",
+      "incredere": "O"
+    },
+    {
+      "producator": "Turntide",
+      "model": "AF300D",
+      "tip": "flux axial, dublu",
+      "P_varf_kW": 648,
+      "P_cont_kW": 146,
+      "M_varf_Nm": 904.6,
+      "M_cont_Nm": 387.8,
+      "n_max_rpm": 8000,
+      "U_dc": "≤ 850 V",
+      "masa_kg": 57.8,
+      "sursa": "https://turntide.com/products/motors/",
+      "incredere": "O"
+    },
+    {
+      "producator": "Helix",
+      "model": "SPM177-91",
+      "tip": "flux radial, MP",
+      "P_varf_kW": 175,
+      "P_cont_kW": 175,
+      "M_varf_Nm": 255,
+      "M_cont_Nm": 134,
+      "n_max_rpm": 25000,
+      "U_dc": "nepublicată",
+      "masa_kg": 17.3,
+      "sursa": "https://www.ehelix.com/products/spm177-electric-motor/",
+      "incredere": "O"
+    },
+    {
+      "producator": "EMRAX",
+      "model": "348 LV LC",
+      "tip": "flux axial, MP, p = 10",
+      "P_varf_kW": 340,
+      "P_cont_kW": 160,
+      "M_varf_Nm": 1000,
+      "M_cont_Nm": 360,
+      "n_max_rpm": 4500,
+      "U_dc": "100–830 V",
+      "masa_kg": 43.9,
+      "sursa": "https://emrax.com/wp-content/uploads/2026/08/EMRAX_348_datasheet_v1.7.pdf",
+      "incredere": "O"
+    },
+    {
+      "producator": "Equipmake",
+      "model": "APM-200",
+      "tip": "MP cu rotor „spoke”",
+      "P_varf_kW": 220,
+      "P_cont_kW": null,
+      "M_varf_Nm": 450,
+      "M_cont_Nm": null,
+      "n_max_rpm": 10000,
+      "U_dc": "750 V (invertor)",
+      "masa_kg": 42,
+      "sursa": "https://equipmake.com/products/apm-200/",
+      "incredere": "O"
+    }
+  ],
+  "configuratii": [
+    {
+      "nume": "1 × YM360 (față) + 2 × YM720 (spate)",
+      "componente": [
+        [
+          "YM360",
+          1
+        ],
+        [
+          "YM720",
+          2
+        ]
+      ]
+    },
+    {
+      "nume": "3 × YM720 (1 față + 2 spate)",
+      "componente": [
+        [
+          "YM720",
+          3
+        ]
+      ]
+    },
+    {
+      "nume": "2 × YM720 (spate)",
+      "componente": [
+        [
+          "YM720",
+          2
+        ]
+      ]
+    },
+    {
+      "nume": "2 × AF300D",
+      "componente": [
+        [
+          "AF300D",
+          2
+        ]
+      ]
+    }
+  ]
+}

@@ -180,7 +180,8 @@ IPOTEZE = [
     ("c_V1_kmh", "Viteza constantă a ciclului P3, V1", "km/h", "V1_kmh", "Curs, P3 slide 4"),
     ("c_eta", "Randament η_el-mec = η_mec-el", "-", "eta", "Curs, P3 slide 8 (pierderi tipice ale acționării 15–20 %)"),
     ("c_rez", "Rezervă de energie în baterie", "-", "rezerva", "Curs, P3 slide 8"),
-    ("c_U_tinta", "Tensiunea nominală țintă a bateriei", "V", "U_bat_tinta", "Arhitectura de 800 V a clasei"),
+    ("c_U_max", "Tensiunea maximă admisă a bateriei", "V", "U_bat_max_admis",
+     "Clasa „800 V”: invertoare / motoare de cel mult 800–850 V (YASA 800 V, EMRAX 830 V, Turntide 850 V)"),
     ("c_k_masa", "Masa maximă a bateriei / masa vehiculului", "-", "k_masa_bat", "Curs, P3 slide 9"),
 ]
 CELULA_CAMPURI = [
@@ -502,7 +503,8 @@ def foaie_baterie(wb, F2, F3, col, rm, rgt):
     F.sectiune("Numărul de celule")
     F.rand_("Wcel", "", "Energia unei celule", "W_celulă", "Ws", "=cel_Cap*3600*cel_U_nom", "Cap [Ah→As] × U [V]", "0")
     F.rand_("Nmin", "", "Numărul minim de celule (energie)", "N_min", "-", "=ROUNDUP({Wbat}/{Wcel},0)", "", "0")
-    F.rand_("Ns", "", "Celule în serie", "Ns", "-", "=ROUND(c_U_tinta/cel_U_nom,0)", "U_bat ≈ 800 V", "0", True)
+    F.rand_("Ns", "", "Celule în serie", "Ns", "-", "=ROUNDDOWN(c_U_max/cel_U_max,0)",
+            "Ns·U_max celulă ≤ tensiunea maximă admisă", "0", True)
     F.rand_("Unom", "", "Tensiunea nominală a bateriei", "U_bat", "V", "={Ns}*cel_U_nom", "", "0.0")
     F.rand_("Umax", "", "Tensiunea maximă (complet încărcată)", "", "V", "={Ns}*cel_U_max", "", "0.0")
     F.rand_("Umin", "", "Tensiunea minimă (descărcată)", "", "V", "={Ns}*cel_U_min", "", "0.0")

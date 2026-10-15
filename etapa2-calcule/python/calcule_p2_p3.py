@@ -32,7 +32,7 @@ RADACINA = AICI.parent
 C = dict(g=9.81, rho=1.293, mu_f=0.013, mu_a=0.8, alpha=0.0, Vv=0.0,
          r=0.35, pp=0.01, Va_kmh=100.0, n_max=15000.0,
          V1_kmh=50.0, eta=0.80, rezerva=0.30, n_pasi=[100, 1000],
-         U_bat_tinta=800.0, k_masa_bat=0.30)
+         U_bat_max_admis=850.0, k_masa_bat=0.30)
 
 # Aceeași celulă ca matlab/celula_aleasa.m
 CELULA = None  # completat din celula_aleasa.json
@@ -87,6 +87,12 @@ SURSE = [
      "Koloch et al., World Electric Vehicle Journal 16(9):484, 2025", "https://doi.org/10.3390/wevj16090484"),
     ("Raportul masă celule / masă pachet, celule cilindrice 0,48–0,67",
      "Löbberding et al., World Electric Vehicle Journal 11(4):77, 2020", "https://doi.org/10.3390/wevj11040077"),
+    ("Motoare YASA YM720 / YM360", "YASA – Series motors (pagina producătorului)", "https://yasa.com/yasa-series-motors/"),
+    ("Motor Turntide AF300D", "Turntide – Axial flux motors", "https://turntide.com/products/motors/"),
+    ("Motor Helix SPM177", "Helix – SPM177 electric motor", "https://www.ehelix.com/products/spm177-electric-motor/"),
+    ("Motor EMRAX 348", "EMRAX – fișă tehnică v1.7 (PDF)",
+     "https://emrax.com/wp-content/uploads/2026/08/EMRAX_348_datasheet_v1.7.pdf"),
+    ("Motor Equipmake APM-200", "Equipmake – APM-200", "https://equipmake.com/products/apm-200/"),
     ("Metoda de calcul", "Suport curs CCA – Proiect P2 (07.10.2026) și P3 (14.10.2026)", "–"),
     ("(S) = sursă secundară", "Pagina producătorului nu a putut fi accesată sau nu publică valoarea; s-a folosit "
      "o bază de date sau o publicație independentă", "–"),
@@ -272,7 +278,7 @@ def dimensionare_baterie(Wbat, cel, V, P_max, c=C):
     B = {}
     B["W_celula"] = cel["Cap_Ah"] * 3600 * cel["U_nom"]
     B["N_min"] = math.ceil(Wbat / B["W_celula"])
-    B["Ns"] = round(c["U_bat_tinta"] / cel["U_nom"])
+    B["Ns"] = math.floor(c["U_bat_max_admis"] / cel["U_max"])
     B["U_nom"] = B["Ns"] * cel["U_nom"]
     B["U_max"] = B["Ns"] * cel["U_max"]
     B["U_min"] = B["Ns"] * cel["U_min"]
@@ -456,6 +462,9 @@ def ro(x, d=2):
     return s.replace(",", " ").replace(".", ",")
 
 
+MOTOARE_REC = ""
+
+
 def tabele_readme(tab, rez, mat=None):
     m, g = rez["medie"], rez["gt63"]
     T = {}
@@ -589,7 +598,7 @@ def tabele_readme(tab, rez, mat=None):
             f"| Energia necesară Wbat | {ro(m['p3']['Wbat_kWh'], 2)} kWh | {ro(g['p3']['Wbat_kWh'], 2)} kWh |",
             f"| W_celulă = Cap·U | {ro(Bm['W_celula'], 0)} Ws ({ro(Bm['W_celula']/3600, 1)} Wh) | idem |",
             f"| N_min = Wbat / W_celulă | {ro(Bm['N_min'], 0)} | {ro(Bg['N_min'], 0)} |",
-            f"| Celule în serie Ns (U ≈ 800 V) | {Bm['Ns']} | {Bg['Ns']} |",
+            f"| Celule în serie Ns = floor(850 V / 4,2 V) | {Bm['Ns']} | {Bg['Ns']} |",
             f"| Tensiune nominală (min – max) | {ro(Bm['U_nom'], 1)} V ({ro(Bm['U_min'], 0)} – {ro(Bm['U_max'], 0)} V) | "
             f"{ro(Bg['U_nom'], 1)} V |",
             f"| Ramuri în paralel: din energie / din curent | {Bm['Np_energie']} / {Bm['Np_curent']} | "
@@ -630,13 +639,14 @@ def tabele_readme(tab, rez, mat=None):
             f"idem |",
             f"| | Masa celulelor / pachetului (estimare) | {ro(Bm['m_celule'], 0)} / {ro(Bm['m_pachet'], 0)} kg | "
             f"{ro(Bg['m_celule'], 0)} / {ro(Bg['m_pachet'], 0)} kg |",
+            ("| | Motoare din catalog (exemplu, YASA) | " + MOTOARE_REC + " | – |" if MOTOARE_REC else ""),
             "| Convertor / invertor | Tip | invertor trifazat DC–AC (tranzistoare SiC), alimentat direct din baterie | idem |",
             f"| | Tensiunea continuă de intrare U_bat | {ro(Bm['U_min'], 0)} – {ro(Bm['U_max'], 0)} V | idem |",
             f"| | Tensiunea de linie maximă Um = U_bat/√2 (la U_min / U_nom) | {ro(Bm['U_min']/math.sqrt(2), 0)} / "
             f"{ro(Bm['U_nom']/math.sqrt(2), 0)} V | idem |",
             f"| | Curentul din baterie la P_max (U_nom / U_min) | {ro(Bm['I_bat_nom'], 0)} / {ro(Bm['I_bat_max'], 0)} A | "
             f"{ro(Bg['I_bat_nom'], 0)} / {ro(Bg['I_bat_max'], 0)} A |"]
-    T["sinteza"] = "\n".join(rows)
+    T["sinteza"] = "\n".join(r for r in rows if r)
     return T
 
 
@@ -646,28 +656,35 @@ def tabela_motoare(rez, cale_json):
         return None
     cat = json.loads(cale_json.read_text(encoding="utf-8"))
     R = rez["medie"]["p2"]
-    n_roata_vmax = R["Omega_r_max"] * 60 / (2 * math.pi)   # turația roții la v_max [rot/min]
-    rows = ["| Motor (tip) | P vârf / continuă [kW] | M vârf [Nm] | n_max [rot/min] | Masă [kg] | "
-            "1/i_rd necesar | Nr. motoare: P_max / P_nom / Mr | Configurație |", "|---|---|---|---|---|---|---|---|"]
+    n_roata = R["Omega_r_max"] * 60 / (2 * math.pi)        # turația roții la v_max [rot/min]
+    eta_r = 1 - C["pp"]
+    mot = {mo["model"]: mo for mo in cat["motoare"]}
+    k_of = lambda mo: mo["n_max_rpm"] / n_roata              # noqa: E731  1/i_rd pentru n_max la v_max
+    Mroata = lambda mo: mo["M_varf_Nm"] * k_of(mo) * eta_r   # noqa: E731  cuplul la roți al unui motor
+    rows = ["| Motor (tip) | P vârf / continuă [kW] | M vârf [Nm] | n_max [rot/min] | U_dc | Masă [kg] | "
+            "1/i_rd pentru v_max | Cuplu la roți / motor [Nm] |", "|---|---|---|---|---|---|---|---|"]
     for mo in cat["motoare"]:
-        k = mo["n_max_rpm"] / n_roata_vmax                   # raportul de reducere pentru n_max la v_max
-        n_p = math.ceil(R["P_max"] / (mo["P_varf_kW"] * 1e3))
-        n_c = math.ceil(R["P_nom"] / (mo["P_cont_kW"] * 1e3))
-        n_m = math.ceil(R["Mr"] / (mo["M_varf_Nm"] * k * (1 - C["pp"])))
-        n = max(n_p, n_c, n_m)
-        rows.append(f"| {mo['producator']} {mo['model']} ({mo['tip']}) | {ro(mo['P_varf_kW'], 0)} / "
-                    f"{ro(mo['P_cont_kW'], 0)} | {ro(mo['M_varf_Nm'], 0)} | {ro(mo['n_max_rpm'], 0)} | "
-                    f"{ro(mo['masa_kg'], 1) if mo.get('masa_kg') else '–'} | {ro(k, 2)} | {n_p} / {n_c} / {n_m} | "
-                    f"**{n} × {mo['model']}** |")
-    rows.append("")
-    rows.append(f"Cerințe (vehicul mediu, tot vehiculul): P_max = {ro(R['P_max']/1e3, 0)} kW, "
-                f"P_nom = {ro(R['P_nom']/1e3, 0)} kW, cuplul la roți Mr = {ro(R['Mr'], 0)} Nm, turația roții la v_max "
-                f"= {ro(n_roata_vmax, 0)} rot/min. Pentru fiecare motor, 1/i_rd = n_max / {ro(n_roata_vmax, 0)}; "
-                f"numărul de motoare rezultă din puterea de vârf, din puterea continuă și din cuplul la roți "
-                f"(M_vârf · 1/i_rd · 0,99).")
-    if cat.get("concluzie"):
-        rows.append("")
-        rows.append(cat["concluzie"])
+        pc = "–" if mo["P_cont_kW"] is None else ro(mo["P_cont_kW"], 0)
+        rows.append(f"| {mo['producator']} {mo['model']} ({mo['tip']}) | {ro(mo['P_varf_kW'], 0)} / {pc} | "
+                    f"{ro(mo['M_varf_Nm'], 0)} | {ro(mo['n_max_rpm'], 0)} | {mo['U_dc']} | {ro(mo['masa_kg'], 1)} | "
+                    f"{ro(k_of(mo), 2)} | {ro(Mroata(mo), 0)} |")
+    rows += ["", f"Cerințe (vehicul mediu, tot vehiculul): P_max = {ro(R['P_max']/1e3, 0)} kW, "
+             f"P_nom = {ro(R['P_nom']/1e3, 0)} kW, cuplul la roți Mr = r·Ft = {ro(R['Mr'], 0)} Nm; turația roții la v_max "
+             f"= {ro(n_roata, 0)} rot/min. Fiecare motor are propriul reductor, ales astfel încât n_max să corespundă "
+             f"lui v_max: 1/i_rd = n_max / {ro(n_roata, 0)}; cuplul la roți = M_vârf · (1/i_rd) · 0,99.", "",
+             "| Configurație | P vârf [kW] | P continuă [kW] | Cuplu la roți [Nm] | Masă motoare [kg] | Verificare |",
+             "|---|---|---|---|---|---|"]
+    ok = lambda x: "✓" if x else "✗"  # noqa: E731
+    for cf in cat["configuratii"]:
+        comp = [(mot[m], n) for m, n in cf["componente"]]
+        pv = sum(mo["P_varf_kW"] * n for mo, n in comp)
+        pc = None if any(mo["P_cont_kW"] is None for mo, _ in comp) else sum(mo["P_cont_kW"] * n for mo, n in comp)
+        mr = sum(Mroata(mo) * n for mo, n in comp)
+        ms = sum(mo["masa_kg"] * n for mo, n in comp)
+        c1, c2, c3 = pv * 1e3 >= R["P_max"], pc is not None and pc * 1e3 >= R["P_nom"], mr >= R["Mr"]
+        rez_ = "**îndeplinește toate cerințele**" if (c1 and c2 and c3) else "nu îndeplinește toate cerințele"
+        rows.append(f"| {cf['nume']} | {ro(pv, 0)} {ok(c1)} | {'–' if pc is None else ro(pc, 0)} {ok(c2)} | "
+                    f"{ro(mr, 0)} {ok(c3)} | {ro(ms, 1)} | {rez_} |")
     return "\n".join(rows)
 
 
@@ -711,6 +728,10 @@ def main():
     print("salvat", out)
     cale_m = RADACINA / "rezultate" / "rezultate_matlab.json"
     mat = json.loads(cale_m.read_text(encoding="utf-8")) if cale_m.exists() else None
+    global MOTOARE_REC
+    cale_mot = RADACINA / "date" / "motoare_catalog.json"
+    if cale_mot.exists():
+        MOTOARE_REC = json.loads(cale_mot.read_text(encoding="utf-8"))["configuratii"][0]["nume"]
     T = tabele_readme(tab, rez, mat)
     tm = tabela_motoare(rez, RADACINA / "date" / "motoare_catalog.json")
     if tm:
