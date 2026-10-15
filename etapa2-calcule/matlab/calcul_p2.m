@@ -17,6 +17,7 @@ R.Fra_Va = F3.Fra;  R.Ff = F3.Ff;  R.Gt = F3.Gt;
 R.Ft_doc = F3.Ft;   R.Fa = F3.Fa;
 
 % Pasul 4: verificarea aderenței Ft <= Fa; altfel Ft = Fa și se recalculează a
+R.mu_necesar = R.Ft_doc / (V.M * C.g * cos(C.alpha));   % aderența cerută de a_doc
 R.aderenta_ok = R.Ft_doc <= R.Fa;
 if R.aderenta_ok
     R.a  = R.a_doc;
@@ -67,6 +68,8 @@ R.P_nom = R.Pax_nom;
 
 % Verificare de coerență cu documentarea: aceeași formulă cu accelerația documentată
 R.Pax_fara_aderenta = R.Ft_doc * R.Va / (1 - C.pp);
+R.Max_fara_aderenta = R.Pax_fara_aderenta / R.Omega_ax_Va;
 R.P_doc = V.P_doc;
+R.cuplu_doc = V.cuplu_doc;
 R.raport_vmax = R.vmax / R.Va;               % domeniul de slăbire de câmp necesar
 end

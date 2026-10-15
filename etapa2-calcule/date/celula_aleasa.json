@@ -8,13 +8,13 @@
   "m_kg": 0.071,
   "I_max_cont": 60,
   "R_dc_mOhm": 12.8,
-  "k_celula_pachet": 0.7,
+  "k_celula_pachet": 0.63,
   "sursa": "https://www.molicel.com/wp-content/uploads/4.TR%E7%B0%A1%E6%98%93%E8%A6%8F%E6%A0%BC_INR21700P50B_1.1_Product-Data-Sheet-of-INR-21700-P50B-80122.pdf",
   "note_U_nom": "Fi\u0219a tehnic\u0103 Molicel P50B v1.1",
   "note_U_max": "Tensiunea de \u00eenc\u0103rcare",
   "note_U_min": "Tensiunea de desc\u0103rcare (cut-off)",
   "note_Cap_Ah": "Capacitate tipic\u0103 5000 mAh (minim\u0103 4850 mAh); 18,0 Wh",
-  "note_m_kg": "Mas\u0103 maxim\u0103 71 g (260 Wh/kg)",
+  "note_m_kg": "Mas\u0103 maxim\u0103 71 g (18,0 Wh / 0,071 kg \u2248 254 Wh/kg)",
   "note_I_max_cont": "Desc\u0103rcare continu\u0103 60 A (cu limit\u0103 de temperatur\u0103 80 \u00b0C)",
-  "note_k_celula_pachet": "Estimare pentru pachete cu celule cilindrice (vezi README)"
+  "note_k_celula_pachet": "Mediana pachetelor NMC (Koloch et al., World Electr. Veh. J. 16:484, 2025); intervalul tipic pentru celule cilindrice: 0,55\u20130,70"
 }

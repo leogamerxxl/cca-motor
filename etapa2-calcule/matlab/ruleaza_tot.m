@@ -1,9 +1,12 @@
 %% Rulează P2 și P3 și salvează rezultatele numerice în ../rezultate/rezultate_matlab.json
 % Rezultatele sunt comparate cu implementarea Python / Excel (python/calcule_p2_p3.py).
 
-if ~exist('GRAFICE', 'var'), GRAFICE = false; end
+% Implicit fără figuri (doar tabelele și fișierul JSON); pentru figuri: GRAFICE = true; ruleaza_tot
+grafice_implicit = ~exist('GRAFICE', 'var');
+if grafice_implicit, GRAFICE = false; end
 main_p2;
 main_p3;
+if grafice_implicit, clear GRAFICE; end
 
 C   = constante();
 D   = date_intrare();
@@ -19,8 +22,9 @@ for k = 1:2
     bloc.date = V;
     bloc.p2 = R2;
     bloc.p3_discretizare = struct('n', C.n_pasi, ...
-        'P01_med', [R3.disc.P01_med], 'W01', [R3.disc.W01], ...
-        'eroare_W01_pct', [R3.disc.eroare_W01_pct], 'timp_s', [R3.disc.timp_s]);
+        'P01_med', [R3.disc.P01_med], 'W01_med', [R3.disc.W01_med], 'W01', [R3.disc.W01], ...
+        'eroare_W01_med_pct', [R3.disc.eroare_W01_med_pct], 'eroare_W01_pct', [R3.disc.eroare_W01_pct], ...
+        'timp_s', [R3.disc.timp_s]);
     bloc.p3 = rmfield(R3, 'disc');
     bloc.baterie = rmfield(B, 'celula');
     iesire.(nume{k}) = bloc;

@@ -50,7 +50,7 @@ SURSE = [
      "91bfc69ec55530e277b5023245b77c1c82772920/eTD-Audi-RS-e-tron-GT-performance-550kW_250515.pdf"),
     ("Lotus Emeya R – WLTP 435–485 km", "Lotus – presă, specificații tehnice Emeya",
      "https://www.lotuscars.com/en/press/models/emeya"),
-    ("Tesla Model S Plaid – WLTP 600–611 km, 18,0–18,7 kWh/100 km (S)", "EV Database (tesla.com blochează accesul)",
+    ("Tesla Model S Plaid – WLTP 600–611 km, 18,0–18,7 kWh/100 km (S)", "EV Database (sursă secundară; tesla.com nu a putut fi accesat)",
      "https://ev-database.org/car/3384/Tesla-Model-S-Plaid"),
     ("Lucid Air Sapphire – WLTP 694 km, 19,1 kWh/100 km", "Lucid – pagina Air (Germania)",
      "https://lucidmotors.com/de-de/air"),
@@ -65,13 +65,31 @@ SURSE = [
     ("Rimac Nevera – WLTP 489 km, 30,0 kWh/100 km, anvelope 315/35 R20", "Rimac – pagina Nevera",
      "https://www.rimac-automobili.com/nevera/"),
     ("Maserati GranTurismo Folgore – WLTP 450–459 km, 21,9–22,3 kWh/100 km (S)",
-     "EV Database (maserati.com blochează accesul)", "https://ev-database.org/car/1803/Maserati-GranTurismo-Folgore"),
+     "EV Database (sursă secundară; maserati.com nu a putut fi accesat)", "https://ev-database.org/car/1803/Maserati-GranTurismo-Folgore"),
     ("Celula Molicel INR-21700-P50B", "Molicel – Product Data Sheet v1.1 (PDF)",
      "https://www.molicel.com/wp-content/uploads/4.TR%E7%B0%A1%E6%98%93%E8%A6%8F%E6%A0%BC_INR21700P50B_1.1_"
      "Product-Data-Sheet-of-INR-21700-P50B-80122.pdf"),
     ("Celule analizate: Molicel P45B", "Molicel – Product Data Sheet v1.4 (PDF)",
      "https://www.molicel.com/wp-content/uploads/INR21700P45B_1.4_Product-Data-Sheet-of-INR-21700-P45B-80109.pdf"),
+    ("GT 63 – anvelope 265/40 R20 față, 295/40 R20 spate (S)", "ADAC Autokatalog (date ale producătorului, "
+     "sursă secundară)", "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/mercedes-benz/"
+     "amg-gt-4-tuerer-coupe/590/351152/"),
+    ("ρ = 1,2923 kg/m³ la 0 °C și 101 325 Pa", "Wikipedia (de) – Luftdichte, tabelul densitate–temperatură",
+     "https://de.wikipedia.org/wiki/Luftdichte"),
+    ("µf: f = 0,01·(1 + V/160); µa pe asfalt uscat 0,85 (50 km/h) / 0,8 (90 km/h)",
+     "NPTEL – Introduction to Hybrid and Electric Vehicles, modulul 2, lecția 3 (după Ehsani, 2005)",
+     "https://archive.nptel.ac.in/content/storage2/courses/108103009/module2/lec3/8.html"),
+    ("µa maxim măsurat pe asfalt uscat ≈ 1,1–1,2", "TRL PPR 496 – Comparison of motorcycle and car tyre/road friction",
+     "https://www.trl.co.uk/uploads/trl/documents/PPR496.pdf"),
+    ("η: pierderi ale acționării electrice 15–20 %", "U.S. DOE / EPA – Where the Energy Goes: Electric Cars",
+     "https://www.fueleconomy.gov/feg/atv-ev.shtml"),
+    ("Raportul masă celule / masă pachet ≈ 0,63 (mediana NMC)",
+     "Koloch et al., World Electric Vehicle Journal 16(9):484, 2025", "https://doi.org/10.3390/wevj16090484"),
+    ("Raportul masă celule / masă pachet, celule cilindrice 0,48–0,67",
+     "Löbberding et al., World Electric Vehicle Journal 11(4):77, 2020", "https://doi.org/10.3390/wevj11040077"),
     ("Metoda de calcul", "Suport curs CCA – Proiect P2 (07.10.2026) și P3 (14.10.2026)", "–"),
+    ("(S) = sursă secundară", "Pagina producătorului nu a putut fi accesată sau nu publică valoarea; s-a folosit "
+     "o bază de date sau o publicație independentă", "–"),
 ]
 
 
@@ -117,7 +135,7 @@ def vehicul_gt63(tab, med):
     t = next(t for t in tab if t["vehicul"].startswith("Mercedes-AMG GT 63"))
     return dict(nume=t["vehicul"], P_doc=t["P_W"], vmax=t["vmax_ms"], a_doc=t["a_ms2"], M=t["masa_kg"],
                 cuplu_doc=t["cuplu_Nm"], W_bat_doc=t["bat_Ws"], autonomie=t["aut_km"] * 1e3,
-                consum_doc=t["cons_Wsm"], Cx=t["Cx"], S=t["A_m2"], r_static=med["r_static"])
+                consum_doc=t["cons_Wsm"], Cx=t["Cx"], S=t["A_m2"], r_static=t["r_static_m"])
 
 
 # ---------------------------------------------------------------- calcule (oglinda fișierelor .m)
@@ -143,6 +161,7 @@ def calcul_p2(V, c=C):
     F3 = forte(R["Va"], R["a_doc"], V, c)
     R["Fra_Va"], R["Ff"], R["Gt"], R["Ft_doc"], R["Fa"] = (f(F3["Fra"]), f(F3["Ff"]), f(F3["Gt"]),
                                                           f(F3["Ft"]), F3["Fa"])
+    R["mu_necesar"] = R["Ft_doc"] / (V["M"] * c["g"] * math.cos(c["alpha"]))
     R["aderenta_ok"] = R["Ft_doc"] <= R["Fa"]
     if R["aderenta_ok"]:
         R["a"], R["Ft"] = R["a_doc"], R["Ft_doc"]
@@ -175,7 +194,9 @@ def calcul_p2(V, c=C):
     R["Max_vmax"] = R["Pax_nom"] / R["Omega_ax_max"]
     R["P_max"], R["P_nom"] = R["Pax"], R["Pax_nom"]
     R["Pax_fara_aderenta"] = R["Ft_doc"] * R["Va"] / (1 - c["pp"])
+    R["Max_fara_aderenta"] = R["Pax_fara_aderenta"] / R["Omega_ax_Va"]
     R["P_doc"] = V["P_doc"]
+    R["cuplu_doc"] = V["cuplu_doc"]
     R["raport_vmax"] = R["vmax"] / R["Va"]
     return R
 
@@ -183,7 +204,8 @@ def calcul_p2(V, c=C):
 def calcul_p3(V, R2, c=C):
     R = dict(nume=V["nume"])
     R["V1"] = c["V1_kmh"] / 3.6
-    R["a"] = R2["a"]
+    R["a_P2"] = R2["a_doc"]          # a = Va/ta din P2 (pasul 2); aderența se verifică la V1
+    R["a"] = R["a_P2"]
     F1 = forte(R["V1"], R["a"], V, c)
     R["aderenta_ok"] = bool(f(F1["Ft"]) <= F1["Fa"])
     if not R["aderenta_ok"]:
@@ -207,17 +229,21 @@ def calcul_p3(V, R2, c=C):
         t = np.linspace(0, R["t1"], n + 1)
         v = R["a"] * t
         P = forte(v, R["a"], V, c)["Ft"] * v
-        P01 = float(P[1:].sum() / n)
-        W01 = float(P.sum() * dt)
+        P01 = float(P[:n].sum() / n)        # (1/n)·Σ_{i=1..n}: începutul intervalelor
+        W01 = float(P[:n + 1].sum() * dt)   # Σ_{i=1..n+1}·Δt: P(t_1) = 0 ⇒ sfârșitul intervalelor
         nrep = 2000
         t0 = time.perf_counter()
-        for _ in range(nrep):
+        for _ in range(nrep):              # același calcul (grilă, forțe, sume)
             tt = np.linspace(0, R["t1"], n + 1)
             vv = R["a"] * tt
-            float(((B * vv ** 2 + A) * vv).sum() * dt)
+            PP = forte(vv, R["a"], V, c)["Ft"] * vv
+            float(PP[:n].sum() / n)
+            float(PP.sum() * dt)
         durata = (time.perf_counter() - t0) / nrep
         R["disc"].append(dict(n=n, dt=dt, t=t, P=P, P01_med=P01, W01=W01, W01_med=P01 * R["t1"],
-                              eroare_W01_pct=(W01 - R["W01_exact"]) / R["W01_exact"] * 100, timp_s=durata))
+                              eroare_W01_pct=(W01 - R["W01_exact"]) / R["W01_exact"] * 100,
+                              eroare_W01_med_pct=(P01 * R["t1"] - R["W01_exact"]) / R["W01_exact"] * 100,
+                              timp_s=durata))
     R["Wmed"] = R["Pmed"] * R["t1"]
     R["P01_med"] = R["disc"][-1]["P01_med"]
     R["W01_med"] = R["disc"][-1]["W01_med"]
@@ -252,7 +278,8 @@ def dimensionare_baterie(Wbat, cel, V, P_max, c=C):
     B["U_min"] = B["Ns"] * cel["U_min"]
     B["Np_energie"] = math.ceil(B["N_min"] / B["Ns"])
     B["P_el_max"] = P_max / c["eta"]
-    B["I_bat_max"] = B["P_el_max"] / B["U_nom"]
+    B["I_bat_nom"] = B["P_el_max"] / B["U_nom"]
+    B["I_bat_max"] = B["P_el_max"] / B["U_min"]       # caz defavorabil: tensiunea minimă
     B["Np_curent"] = math.ceil(B["I_bat_max"] / cel["I_max_cont"])
     B["Np"] = max(B["Np_energie"], B["Np_curent"])
     B["N"] = B["Ns"] * B["Np"]
@@ -260,6 +287,10 @@ def dimensionare_baterie(Wbat, cel, V, P_max, c=C):
     B["W_real_kWh"] = B["W_real"] / 3.6e6
     B["Cap_Ah"] = B["Np"] * cel["Cap_Ah"]
     B["I_celula"] = B["I_bat_max"] / B["Np"]
+    B["I_celula_nom"] = B["I_bat_nom"] / B["Np"]
+    B["P_doc"] = V["P_doc"]
+    B["I_celula_doc_nom"] = V["P_doc"] / c["eta"] / B["U_nom"] / B["Np"]
+    B["I_celula_doc_min"] = V["P_doc"] / c["eta"] / B["U_min"] / B["Np"]
     B["m_celule"] = B["N"] * cel["m_kg"]
     B["m_pachet"] = B["m_celule"] / cel["k_celula_pachet"]
     B["m_limita"] = c["k_masa_bat"] * V["M"]
@@ -307,7 +338,7 @@ def compara_cu_matlab(rez, cale_json, tol=1e-6):
                     dif.append((cheie, bloc_py, k, vm, vp))
         dm = m[cheie]["p3_discretizare"]
         for q, n in enumerate(dm["n"]):
-            for k in ("P01_med", "W01"):
+            for k in ("P01_med", "W01_med", "W01", "eroare_W01_med_pct", "eroare_W01_pct"):
                 nr += 1
                 vp = rez[cheie]["p3"]["disc"][q][k]
                 if abs(dm[k][q] - vp) > tol * max(1.0, abs(vp)):
@@ -319,6 +350,14 @@ def compara_cu_matlab(rez, cale_json, tol=1e-6):
 
 
 # ---------------------------------------------------------------- figuri
+def virgula(ax):
+    """Gradațiile axelor cu virgulă zecimală (convenția românească)."""
+    from matplotlib.ticker import FuncFormatter
+    fmt = FuncFormatter(lambda x, _: f"{x:g}".replace(".", ",").replace("-", "−"))
+    ax.xaxis.set_major_formatter(fmt)
+    ax.yaxis.set_major_formatter(fmt)
+
+
 def figuri(rez, dir_fig):
     dir_fig.mkdir(exist_ok=True)
     V, R2, R3 = rez["medie"]["date"], rez["medie"]["p2"], rez["medie"]["p3"]
@@ -331,10 +370,10 @@ def figuri(rez, dir_fig):
     Fc_ = forte(v, 0.0, V)               # rulare cu viteză constantă
     fig, ax = plt.subplots(1, 2, figsize=(11, 4.2))
     ax[0].plot(va * 3.6, Fd_["Ft"] / 1e3, ":", color="C3",
-               label=f"$F_t$ cu $a_{{doc}}$ = {R2['a_doc']:.2f} m/s² (depășește aderența)")
-    ax[0].plot(va * 3.6, Fa_["Ft"] / 1e3, color="C0", label=f"$F_t$ cu a = {R2['a']:.2f} m/s² (0–100 km/h)")
+               label=f"$F_t$ cu $a_{{doc}}$ = {ro(R2['a_doc'], 2)} m/s² (depășește aderența)")
+    ax[0].plot(va * 3.6, Fa_["Ft"] / 1e3, color="C0", label=f"$F_t$ cu a = {ro(R2['a'], 2)} m/s² (0–100 km/h)")
     ax[0].plot(v * 3.6, Fc_["Ft"] / 1e3, color="C1", label="$F_t$ la viteză constantă (a = 0)")
-    ax[0].axhline(Fd_["Fa"] / 1e3, ls="--", color="k", lw=1, label=f"$F_a$ = µ$_a$Mg = {Fd_['Fa']/1e3:.1f} kN")
+    ax[0].axhline(Fd_["Fa"] / 1e3, ls="--", color="k", lw=1, label=f"$F_a$ = µ$_a$Mg = {ro(Fd_['Fa']/1e3, 1)} kN")
     ax[0].plot([R2["Va"] * 3.6], [R2["Ft"] / 1e3], "o", color="C0")
     ax[0].plot([R2["vmax"] * 3.6], [R2["Ft_vmax"] / 1e3], "s", color="C1")
     ax[0].set(xlabel="v [km/h]", ylabel="F [kN]", title="Forța de tracțiune necesară")
@@ -342,47 +381,56 @@ def figuri(rez, dir_fig):
     ax[1].plot(va * 3.6, Fd_["Ft"] * va / (1 - C["pp"]) / 1e3, ":", color="C3", label="$P_{ax}$ cu $a_{doc}$")
     ax[1].plot(va * 3.6, Fa_["Ft"] * va / (1 - C["pp"]) / 1e3, color="C0", label="$P_{ax}$ cu a (0–100 km/h)")
     ax[1].plot(v * 3.6, Fc_["Ft"] * v / (1 - C["pp"]) / 1e3, color="C1", label="$P_{ax}$ la viteză constantă")
-    ax[1].axhline(V["P_doc"] / 1e3, ls="--", color="0.5", lw=1, label=f"P declarată (medie) = {V['P_doc']/1e3:.0f} kW")
+    ax[1].axhline(V["P_doc"] / 1e3, ls="--", color="0.5", lw=1,
+                  label=f"P declarată (medie) = {ro(V['P_doc']/1e3, 0)} kW")
     ax[1].plot([R2["Va"] * 3.6], [R2["P_max"] / 1e3], "o", color="C0")
-    ax[1].annotate(f"P_max = {R2['P_max']/1e3:.0f} kW", (R2["Va"] * 3.6, R2["P_max"] / 1e3),
+    ax[1].annotate(f"P_max = {ro(R2['P_max']/1e3, 0)} kW", (R2["Va"] * 3.6, R2["P_max"] / 1e3),
                    textcoords="offset points", xytext=(8, -14), fontsize=8)
     ax[1].plot([R2["vmax"] * 3.6], [R2["P_nom"] / 1e3], "s", color="C1")
-    ax[1].annotate(f"P_nom = {R2['P_nom']/1e3:.0f} kW", (R2["vmax"] * 3.6, R2["P_nom"] / 1e3),
+    ax[1].annotate(f"P_nom = {ro(R2['P_nom']/1e3, 0)} kW", (R2["vmax"] * 3.6, R2["P_nom"] / 1e3),
                    textcoords="offset points", xytext=(-95, 6), fontsize=8)
     ax[1].set(xlabel="v [km/h]", ylabel="P [kW]", title="Puterea la axul mașinii electrice")
     ax[1].legend(fontsize=7.5, loc="upper right", bbox_to_anchor=(1.0, 0.92))
     for a_ in ax:
         a_.grid(alpha=0.3)
+        virgula(a_)
     fig.suptitle("P2 – vehicul mediu (date din documentare)")
     fig.tight_layout()
     fig.savefig(dir_fig / "p2_forte_putere.png", dpi=130)
     plt.close(fig)
 
-    fig, ax = plt.subplots(1, 2, figsize=(11, 4.2), sharey=True)
+    fig, ax = plt.subplots(1, 2, figsize=(11, 4.4), sharey=True)
     tt = np.linspace(0, R3["t1"], 400)
     Pc = forte(R3["a"] * tt, R3["a"], V)["Ft"] * R3["a"] * tt
     for q, d in enumerate(R3["disc"]):
-        ax[q].step(d["t"][1:], d["P"][1:] / 1e3, where="pre", lw=1, label="$P_{ti}$ constant pe interval")
-        ax[q].plot(tt, Pc / 1e3, "--", lw=1, label="P(t) continuu")
-        ax[q].axhline(R3["Pmed"] / 1e3, ls=":", color="k", label=f"$P_{{med}}$ = P$_1$/2 = {R3['Pmed']/1e3:.1f} kW")
+        n = d["n"]
+        # P_ti constant pe [t_i, t_(i+1)]: valoarea de la sfârșit (W01) și de la început (P01-med)
+        ax[q].step(d["t"], np.r_[d["P"][1:], d["P"][-1]] / 1e3, where="post", lw=1, color="C0",
+                   label="$P_{ti}$ de la sfârșitul intervalului ($W_{01}$)")
+        ax[q].step(d["t"], np.r_[d["P"][:-1], d["P"][-2]] / 1e3, where="post", lw=1, color="C2",
+                   label="$P_{ti}$ de la începutul intervalului ($P_{01-med}$)")
+        ax[q].plot(tt, Pc / 1e3, "--", lw=1, color="C1", label="P(t) continuu")
+        ax[q].axhline(R3["Pmed"] / 1e3, ls=":", color="k", label=f"$P_{{med}}$ = P$_1$/2 = {ro(R3['Pmed']/1e3, 1)} kW")
         ax[q].axhline(d["P01_med"] / 1e3, ls="-.", color="C2", lw=1,
-                      label=f"$P_{{01-med}}$ = {d['P01_med']/1e3:.2f} kW")
-        ax[q].set(xlabel="t [s]", title=f"n = {d['n']} intervale (Δt = {d['dt']*1e3:.3f} ms)")
+                      label=f"$P_{{01-med}}$ = {ro(d['P01_med']/1e3, 2)} kW")
+        ax[q].set(xlabel="t [s]", title=f"n = {n} intervale (Δt = {ro(d['dt']*1e3, 3)} ms)")
         ins = ax[q].inset_axes([0.56, 0.06, 0.4, 0.3])
         z = R3["t1"] * 0.06
-        m = d["t"] <= z + d["dt"]
-        ins.step(d["t"][m][1:], d["P"][m][1:] / 1e3, where="pre", lw=1)
+        ins.step(d["t"], np.r_[d["P"][1:], d["P"][-1]] / 1e3, where="post", lw=1, color="C0")
+        ins.step(d["t"], np.r_[d["P"][:-1], d["P"][-2]] / 1e3, where="post", lw=1, color="C2")
         tz = np.linspace(0, z, 100)
-        ins.plot(tz, forte(R3["a"] * tz, R3["a"], V)["Ft"] * R3["a"] * tz / 1e3, "--", lw=1)
+        ins.plot(tz, forte(R3["a"] * tz, R3["a"], V)["Ft"] * R3["a"] * tz / 1e3, "--", lw=1, color="C1")
         ins.set_xlim(0, z)
         ins.set_ylim(0, R3["P1"] * 0.07 / 1e3)
-        ins.text(0.03, 0.85, f"zoom 0–{z:.2f} s", fontsize=7, transform=ins.transAxes)
+        ins.text(0.03, 0.85, f"zoom 0–{ro(z, 2)} s", fontsize=7, transform=ins.transAxes)
         ins.tick_params(labelsize=6)
         ins.grid(alpha=0.3)
+        virgula(ins)
         ax[q].grid(alpha=0.3)
-        ax[q].legend(fontsize=8, loc="upper left")
+        ax[q].legend(fontsize=7.5, loc="upper left")
+        virgula(ax[q])
     ax[0].set_ylabel("P [kW]")
-    fig.suptitle(f"P3 – puterea pe intervalul [0, t1], t1 = {R3['t1']:.3f} s (vehicul mediu)")
+    fig.suptitle(f"P3 – puterea pe intervalul [0, t1], t1 = {ro(R3['t1'], 3)} s (vehicul mediu)")
     fig.tight_layout()
     fig.savefig(dir_fig / "p3_putere_discretizare.png", dpi=130)
     plt.close(fig)
@@ -392,9 +440,10 @@ def figuri(rez, dir_fig):
     ax.plot(t_h, np.array([0, R3["V1"], R3["V1"], 0]) * 3.6, lw=2)
     ax.fill_between(t_h, np.array([0, R3["V1"], R3["V1"], 0]) * 3.6, alpha=0.12)
     ax.set(xlabel="t [h]", ylabel="V [km/h]", ylim=(0, 60),
-           title=f"P3 – ciclul de testare: {R3['autonomie']/1e3:.0f} km la {R3['V1']*3.6:.0f} km/h "
-                 f"(t1 = {R3['t1']:.2f} s, t2 – t1 = {R3['t12']/3600:.2f} h)")
+           title=f"P3 – ciclul de testare: {ro(R3['autonomie']/1e3, 0)} km la {ro(R3['V1']*3.6, 0)} km/h "
+                 f"(t1 = {ro(R3['t1'], 2)} s, t2 – t1 = {ro(R3['t12']/3600, 2)} h)")
     ax.grid(alpha=0.3)
+    virgula(ax)
     fig.tight_layout()
     fig.savefig(dir_fig / "p3_ciclu.png", dpi=130)
     plt.close(fig)
@@ -407,7 +456,7 @@ def ro(x, d=2):
     return s.replace(",", " ").replace(".", ",")
 
 
-def tabele_readme(tab, rez):
+def tabele_readme(tab, rez, mat=None):
     m, g = rez["medie"], rez["gt63"]
     T = {}
 
@@ -428,10 +477,12 @@ def tabele_readme(tab, rez):
 
     G = g["date"]
     T["date_si"] = "\n".join([
-        "| Mărime | Vehicul mediu | în S.I. | GT 63 (S.I.) |", "|---|---|---|---|",
+        "| Mărime | Vehicul mediu (unitatea din documentare) | Vehicul mediu (S.I.) | GT 63 (S.I.) |",
+        "|---|---|---|---|",
         f"| Putere maximă | {ro(V['P_doc']/1e3, 1)} kW | {ro(V['P_doc'], 0)} W | {ro(G['P_doc'], 0)} W |",
         f"| Viteză maximă | {ro(V['vmax']*3.6, 1)} km/h | {ro(V['vmax'], 3)} m/s | {ro(G['vmax'], 3)} m/s |",
-        f"| Accelerație maximă (medie 0–100 km/h) | {ro(100/3.6/V['a_doc'], 2)} s | {ro(V['a_doc'], 3)} m/s² | "
+        f"| Accelerație maximă (medie 0–100 km/h) | 0–100 km/h în {ro(100/3.6/V['a_doc'], 2)} s | "
+        f"{ro(V['a_doc'], 3)} m/s² | "
         f"{ro(G['a_doc'], 3)} m/s² |",
         f"| Autonomie | {ro(V['autonomie']/1e3, 1)} km | {ro(V['autonomie'], 0)} m | {ro(G['autonomie'], 0)} m |",
         f"| Masă | {ro(V['M'], 1)} kg | {ro(V['M'], 1)} kg | {ro(G['M'], 0)} kg |",
@@ -446,21 +497,26 @@ def tabele_readme(tab, rez):
     def p2rows(R):
         return [
             ("2", "a_doc = Va / ta", "m/s²", R["a_doc"], 3), ("3", "Fra(Va)", "N", R["Fra_Va"], 1),
-            ("3", "Ff", "N", R["Ff"], 1), ("3", "Ft = Fra + Ff + Gt + M·a_doc", "N", R["Ft_doc"], 1),
-            ("4", "Fa = µa·M·g", "N", R["Fa"], 1), ("4", "a realizabil (Ft = Fa)", "m/s²", R["a"], 3),
+            ("3", "Ff", "N", R["Ff"], 1), ("3", "Gt (α = 0)", "N", R["Gt"], 1),
+            ("3", "Ft = Fra + Ff + Gt + M·a_doc", "N", R["Ft_doc"], 1),
+            ("4", "Fa = µa·M·g", "N", R["Fa"], 1), ("4", "µ necesar = Ft / (M·g)", "-", R["mu_necesar"], 3),
+            ("4", "Ft ≤ Fa ?", "", "NU" if not R["aderenta_ok"] else "DA", None),
+            ("4", "a realizabil (Ft = Fa)", "m/s²", R["a"], 3),
             ("4", "ta realizabil (0–100 km/h)", "s", R["ta"], 2), ("5", "Mr = r·Ft", "Nm", R["Mr"], 1),
             ("5", "Ωr = Va / r", "rad/s", R["Omega_r_Va"], 2), ("5", "Pr = Mr·Ωr", "kW", R["Pr"] / 1e3, 2),
-            ("5", "Pax = Pr / 0,99", "kW", R["Pax"] / 1e3, 2), ("6", "i_rd = Ωr / Ωax (n_max = 15 000 rot/min)", "-",
-                                                              R["i_rd"], 4),
+            ("5", "Pax = Pr / 0,99", "kW", R["Pax"] / 1e3, 2), ("5", "Pp = Pax / 100", "kW", R["Pp"] / 1e3, 2),
+            ("6", "i_rd = Ωr / Ωax (n_max = 15 000 rot/min)", "-", R["i_rd"], 4),
             ("6", "1 / i_rd", "-", R["k_rd"], 2), ("6", "n_ax la Va (turația de bază)", "rot/min", R["n_ax_Va"], 0),
             ("6", "Max = Pax / Ωax", "Nm", R["Max"], 1), ("7", "Fra(v_max)", "N", R["Fra_vmax"], 1),
-            ("7", "Ft(v_max) = Fra + Ff + Gt", "N", R["Ft_vmax"], 1), ("8", "Pax la v_max", "kW", R["Pax_nom"] / 1e3, 2),
+            ("7", "Ft(v_max) = Fra + Ff + Gt", "N", R["Ft_vmax"], 1),
+            ("8", "Ft(v_max) ≤ Fa ?", "", "DA" if R["aderenta_vmax_ok"] else "NU", None),
+            ("8", "Pax la v_max", "kW", R["Pax_nom"] / 1e3, 2),
             ("8", "Max la v_max", "Nm", R["Max_vmax"], 1),
         ]
     a, b = p2rows(m["p2"]), p2rows(g["p2"])
     rows = ["| Pas | Mărime | Unitate | Vehicul mediu | GT 63 |", "|---|---|---|---|---|"]
     for (p, et, um, v1, d), (_, _, _, v2, _) in zip(a, b):
-        rows.append(f"| {p} | {et} | {um} | {ro(v1, d)} | {ro(v2, d)} |")
+        rows.append(f"| {p} | {et} | {um} | {v1 if d is None else ro(v1, d)} | {v2 if d is None else ro(v2, d)} |")
     rows.append(f"| 9 | **P_max (puterea maximă)** | kW | **{ro(m['p2']['P_max']/1e3, 1)}** | "
                 f"**{ro(g['p2']['P_max']/1e3, 1)}** |")
     rows.append(f"| 9 | **P_nom (puterea nominală)** | kW | **{ro(m['p2']['P_nom']/1e3, 1)}** | "
@@ -469,6 +525,10 @@ def tabele_readme(tab, rez):
                 f"{ro(g['p2']['Pax_fara_aderenta']/1e3, 1)} |")
     rows.append(f"| – | Puterea declarată (documentare) | kW | {ro(m['p2']['P_doc']/1e3, 1)} | "
                 f"{ro(g['p2']['P_doc']/1e3, 1)} |")
+    rows.append(f"| – | Max cu a_doc, fără limita de aderență | Nm | {ro(m['p2']['Max_fara_aderenta'], 1)} | "
+                f"{ro(g['p2']['Max_fara_aderenta'], 1)} |")
+    rows.append(f"| – | Cuplul declarat (documentare) | Nm | {ro(m['p2']['cuplu_doc'], 1)} | "
+                f"{ro(g['p2']['cuplu_doc'], 1)} |")
     T["p2"] = "\n".join(rows)
 
     rows = ["| µa | ρ [kg/m³] | a [m/s²] | ta 0–100 [s] | P_max [kW] | P_nom [kW] |", "|---|---|---|---|---|---|"]
@@ -482,13 +542,15 @@ def tabele_readme(tab, rez):
 
     def p3rows(R):
         return [
-            ("1", "V1", "m/s", R["V1"], 4), ("2–4", "a (din P2; Ft1 ≤ Fa)", "m/s²", R["a"], 3),
+            ("1", "V1", "m/s", R["V1"], 4), ("2", "a = Va/ta (din P2)", "m/s²", R["a_P2"], 3),
+            ("4", "Ft1 ≤ Fa cu a din P2 ?", "", "DA" if R["aderenta_ok"] else "NU", None),
+            ("4", "a folosit (Ft1 = Fa dacă aderența nu e respectată)", "m/s²", R["a"], 3),
             ("3", "Ft1 = Fra + Ff + Gt + M·a", "N", R["Ft1"], 1), ("3", "P1 = Ft1·V1", "kW", R["P1"] / 1e3, 3),
             ("5", "Ft1' = Fra + Ff + Gt", "N", R["Ft1p"], 2), ("5", "P1' = Ft1'·V1", "kW", R["P1p"] / 1e3, 4),
             ("6", "t1 = V1 / a", "s", R["t1"], 4), ("7", "Pmed = P1 / 2", "kW", R["Pmed"] / 1e3, 3),
-            ("7", "P01-med (n = 1000)", "kW", R["P01_med"] / 1e3, 3), ("8", "Wmed = Pmed·t1", "kJ", R["Wmed"] / 1e3, 3),
-            ("8", "W01-med = P01-med·t1", "kJ", R["W01_med"] / 1e3, 3), ("8", "W01 = Σ Pti·Δti (n = 1000)", "kJ",
-                                                                         R["W01"] / 1e3, 3),
+            ("7", "P01-med (n = 1000, începutul intervalelor)", "kW", R["P01_med"] / 1e3, 3), ("8", "Wmed = Pmed·t1", "kJ", R["Wmed"] / 1e3, 3),
+            ("8", "W01-med = P01-med·t1 (n = 1000)", "kJ", R["W01_med"] / 1e3, 3),
+            ("8", "W01 = Σ Pti·Δti (n = 1000, sfârșitul intervalelor)", "kJ", R["W01"] / 1e3, 3),
             ("8", "W01 exact (integrală)", "kJ", R["W01_exact"] / 1e3, 3), ("9", "d1 = df = V1·t1 / 2", "m", R["d1"], 3),
             ("10", "autonomie = d1 + d2 + df", "km", R["autonomie"] / 1e3, 1), ("10", "d2", "km", R["d2"] / 1e3, 3),
             ("10", "t2 − t1 = d2 / V1", "h", R["t12"] / 3600, 3), ("11", "W12 = P1'·(t2 − t1)", "kWh", R["W12"] / 3.6e6, 3),
@@ -502,18 +564,24 @@ def tabele_readme(tab, rez):
     a, b = p3rows(m["p3"]), p3rows(g["p3"])
     rows = ["| Pas | Mărime | Unitate | Vehicul mediu | GT 63 |", "|---|---|---|---|---|"]
     for (p, et, um, v1, d), (_, _, _, v2, _) in zip(a, b):
-        rows.append(f"| {p} | {et} | {um} | {ro(v1, d)} | {ro(v2, d)} |")
+        rows.append(f"| {p} | {et} | {um} | {v1 if d is None else ro(v1, d)} | {v2 if d is None else ro(v2, d)} |")
     T["p3"] = "\n".join(rows)
 
-    rows = ["| n | Δt [ms] | P01-med [kW] | W01 [kJ] | eroare față de integrala exactă | timp de calcul [µs] |",
-            "|---|---|---|---|---|---|"]
-    for d in m["p3"]["disc"]:
-        rows.append(f"| {d['n']} | {ro(d['dt']*1e3, 3)} | {ro(d['P01_med']/1e3, 3)} | {ro(d['W01']/1e3, 3)} | "
-                    f"+{ro(d['eroare_W01_pct'], 3)} % | {ro(d['timp_s']*1e6, 1)} |")
+    sgn = lambda x: ("+" if x >= 0 else "−") + ro(abs(x), 3) + " %"  # noqa: E731
+    tm = None
+    if mat is not None:
+        tm = mat["medie"]["p3_discretizare"]["timp_s"]
+    rows = ["| n | Δt [ms] | P01-med [kW] | W01-med [kJ] (eroare) | W01 [kJ] (eroare) | timp Octave [µs] | "
+            "timp Python [µs] |", "|---|---|---|---|---|---|---|"]
+    for q, d in enumerate(m["p3"]["disc"]):
+        rows.append(f"| {d['n']} | {ro(d['dt']*1e3, 3)} | {ro(d['P01_med']/1e3, 3)} | {ro(d['W01_med']/1e3, 3)} "
+                    f"({sgn(d['eroare_W01_med_pct'])}) | {ro(d['W01']/1e3, 3)} ({sgn(d['eroare_W01_pct'])}) | "
+                    f"{ro(tm[q]*1e6, 0) if tm else '–'} | {ro(d['timp_s']*1e6, 0)} |")
     R = m["p3"]
-    rows.append(f"| exact | – | {ro(R['P01_exact']/1e3, 3)} | {ro(R['W01_exact']/1e3, 3)} | 0 | – |")
-    rows.append(f"| Pmed = P1/2 | – | {ro(R['Pmed']/1e3, 3)} | {ro(R['Wmed']/1e3, 3)} | "
-                f"+{ro((R['Wmed']-R['W01_exact'])/R['W01_exact']*100, 3)} % | – |")
+    rows.append(f"| exact | – | {ro(R['P01_exact']/1e3, 3)} | {ro(R['W01_exact']/1e3, 3)} | "
+                f"{ro(R['W01_exact']/1e3, 3)} | – | – |")
+    rows.append(f"| Pmed = P1/2 | – | {ro(R['Pmed']/1e3, 3)} | Wmed = {ro(R['Wmed']/1e3, 3)} "
+                f"({sgn((R['Wmed']-R['W01_exact'])/R['W01_exact']*100)}) | – | – | – |")
     T["discretizare"] = "\n".join(rows)
 
     Bm, Bg = m["baterie"], g["baterie"]
@@ -530,11 +598,14 @@ def tabele_readme(tab, rez):
             f"**{Bg['Ns']}s{Bg['Np']}p = {ro(Bg['N'], 0)} celule** |",
             f"| Energie instalată / capacitate | {ro(Bm['W_real_kWh'], 2)} kWh / {ro(Bm['Cap_Ah'], 0)} Ah | "
             f"{ro(Bg['W_real_kWh'], 2)} kWh / {ro(Bg['Cap_Ah'], 0)} Ah |",
-            f"| Curent maxim baterie (P_max / η / U) | {ro(Bm['I_bat_max'], 0)} A | {ro(Bg['I_bat_max'], 0)} A |",
-            f"| Curent pe celulă la P_max (max. 60 A) | {ro(Bm['I_celula'], 1)} A | {ro(Bg['I_celula'], 1)} A |",
+            f"| Curentul bateriei la P_max: la U_nom / la U_min | {ro(Bm['I_bat_nom'], 0)} A / {ro(Bm['I_bat_max'], 0)} A | "
+            f"{ro(Bg['I_bat_nom'], 0)} A / {ro(Bg['I_bat_max'], 0)} A |",
+            f"| Curent pe celulă la P_max și U_min (max. 60 A) | {ro(Bm['I_celula'], 1)} A | {ro(Bg['I_celula'], 1)} A |",
+            f"| Curent pe celulă la puterea declarată: U_nom / U_min | {ro(Bm['I_celula_doc_nom'], 1)} A / "
+            f"{ro(Bm['I_celula_doc_min'], 1)} A | {ro(Bg['I_celula_doc_nom'], 1)} A / {ro(Bg['I_celula_doc_min'], 1)} A |",
             f"| Masa celulelor | {ro(Bm['m_celule'], 1)} kg ({ro(Bm['procent_celule'], 1)} % din M) | "
             f"{ro(Bg['m_celule'], 1)} kg ({ro(Bg['procent_celule'], 1)} %) |",
-            f"| Masa estimată a pachetului (celule / 0,70) | {ro(Bm['m_pachet'], 1)} kg ({ro(Bm['procent_pachet'], 1)} %) | "
+            f"| Masa estimată a pachetului (celule / {ro(CELULA['k_celula_pachet'], 2)}) | {ro(Bm['m_pachet'], 1)} kg ({ro(Bm['procent_pachet'], 1)} %) | "
             f"{ro(Bg['m_pachet'], 1)} kg ({ro(Bg['procent_pachet'], 1)} %) |",
             f"| Limita 30 % din M | {ro(Bm['m_limita'], 1)} kg – {'respectată' if Bm['masa_ok_pachet'] else 'DEPĂȘITĂ'} | "
             f"{ro(Bg['m_limita'], 1)} kg – {'respectată' if Bg['masa_ok_pachet'] else 'DEPĂȘITĂ'} |"]
@@ -542,13 +613,14 @@ def tabele_readme(tab, rez):
 
     P2m, P2g = m["p2"], g["p2"]
     rows = ["| Subsistem | Mărime | Vehicul mediu (temă) | GT 63 (comparație) |", "|---|---|---|---|",
-            f"| Mașina electrică | Puterea maximă / nominală | {ro(P2m['P_max']/1e3, 0)} kW / {ro(P2m['P_nom']/1e3, 0)} kW | "
+            "| Mașina electrică | Tip | MCA – mașină sincronă cu magneți permanenți (PMSM) | idem |",
+            f"| | Puterea maximă / nominală | {ro(P2m['P_max']/1e3, 0)} kW / {ro(P2m['P_nom']/1e3, 0)} kW | "
             f"{ro(P2g['P_max']/1e3, 0)} kW / {ro(P2g['P_nom']/1e3, 0)} kW |",
             f"| | Cuplul maxim la ax | {ro(P2m['Max'], 0)} Nm | {ro(P2g['Max'], 0)} Nm |",
             f"| | Turația de bază / maximă | {ro(P2m['n_ax_Va'], 0)} / {ro(C['n_max'], 0)} rot/min | "
             f"{ro(P2g['n_ax_Va'], 0)} / {ro(C['n_max'], 0)} rot/min |",
-            f"| Reductor | i_rd = Ωr/Ωax (1 : k) | {ro(P2m['i_rd'], 4)} (1 : {ro(P2m['k_rd'], 2)}) | "
-            f"{ro(P2g['i_rd'], 4)} (1 : {ro(P2g['k_rd'], 2)}) |",
+            f"| Reductor | i_rd = Ωr/Ωax; n_motor/n_roată = 1/i_rd | {ro(P2m['i_rd'], 4)}; {ro(P2m['k_rd'], 2)} | "
+            f"{ro(P2g['i_rd'], 4)}; {ro(P2g['k_rd'], 2)} |",
             f"| Vehicul | a realizabil / 0–100 km/h | {ro(P2m['a'], 2)} m/s² / {ro(P2m['ta'], 2)} s | "
             f"{ro(P2g['a'], 2)} m/s² / {ro(P2g['ta'], 2)} s |",
             f"| Baterie | Energie necesară / instalată | {ro(m['p3']['Wbat_kWh'], 1)} / {ro(Bm['W_real_kWh'], 1)} kWh | "
@@ -556,9 +628,47 @@ def tabele_readme(tab, rez):
             f"| | Celule Molicel P50B | {Bm['Ns']}s{Bm['Np']}p = {ro(Bm['N'], 0)} | {Bg['Ns']}s{Bg['Np']}p = {ro(Bg['N'], 0)} |",
             f"| | Tensiune nominală (min – max) | {ro(Bm['U_nom'], 0)} V ({ro(Bm['U_min'], 0)} – {ro(Bm['U_max'], 0)} V) | "
             f"idem |",
-            f"| Convertor / invertor | Curent maxim din baterie | {ro(Bm['I_bat_max'], 0)} A | {ro(Bg['I_bat_max'], 0)} A |"]
+            f"| | Masa celulelor / pachetului (estimare) | {ro(Bm['m_celule'], 0)} / {ro(Bm['m_pachet'], 0)} kg | "
+            f"{ro(Bg['m_celule'], 0)} / {ro(Bg['m_pachet'], 0)} kg |",
+            "| Convertor / invertor | Tip | invertor trifazat DC–AC (tranzistoare SiC), alimentat direct din baterie | idem |",
+            f"| | Tensiunea continuă de intrare U_bat | {ro(Bm['U_min'], 0)} – {ro(Bm['U_max'], 0)} V | idem |",
+            f"| | Tensiunea de linie maximă Um = U_bat/√2 (la U_min / U_nom) | {ro(Bm['U_min']/math.sqrt(2), 0)} / "
+            f"{ro(Bm['U_nom']/math.sqrt(2), 0)} V | idem |",
+            f"| | Curentul din baterie la P_max (U_nom / U_min) | {ro(Bm['I_bat_nom'], 0)} / {ro(Bm['I_bat_max'], 0)} A | "
+            f"{ro(Bg['I_bat_nom'], 0)} / {ro(Bg['I_bat_max'], 0)} A |"]
     T["sinteza"] = "\n".join(rows)
     return T
+
+
+def tabela_motoare(rez, cale_json):
+    """Comparația cerințelor P2 (vehicul mediu) cu motoare din cataloage (date/motoare_catalog.json)."""
+    if not cale_json.exists():
+        return None
+    cat = json.loads(cale_json.read_text(encoding="utf-8"))
+    R = rez["medie"]["p2"]
+    n_roata_vmax = R["Omega_r_max"] * 60 / (2 * math.pi)   # turația roții la v_max [rot/min]
+    rows = ["| Motor (tip) | P vârf / continuă [kW] | M vârf [Nm] | n_max [rot/min] | Masă [kg] | "
+            "1/i_rd necesar | Nr. motoare: P_max / P_nom / Mr | Configurație |", "|---|---|---|---|---|---|---|---|"]
+    for mo in cat["motoare"]:
+        k = mo["n_max_rpm"] / n_roata_vmax                   # raportul de reducere pentru n_max la v_max
+        n_p = math.ceil(R["P_max"] / (mo["P_varf_kW"] * 1e3))
+        n_c = math.ceil(R["P_nom"] / (mo["P_cont_kW"] * 1e3))
+        n_m = math.ceil(R["Mr"] / (mo["M_varf_Nm"] * k * (1 - C["pp"])))
+        n = max(n_p, n_c, n_m)
+        rows.append(f"| {mo['producator']} {mo['model']} ({mo['tip']}) | {ro(mo['P_varf_kW'], 0)} / "
+                    f"{ro(mo['P_cont_kW'], 0)} | {ro(mo['M_varf_Nm'], 0)} | {ro(mo['n_max_rpm'], 0)} | "
+                    f"{ro(mo['masa_kg'], 1) if mo.get('masa_kg') else '–'} | {ro(k, 2)} | {n_p} / {n_c} / {n_m} | "
+                    f"**{n} × {mo['model']}** |")
+    rows.append("")
+    rows.append(f"Cerințe (vehicul mediu, tot vehiculul): P_max = {ro(R['P_max']/1e3, 0)} kW, "
+                f"P_nom = {ro(R['P_nom']/1e3, 0)} kW, cuplul la roți Mr = {ro(R['Mr'], 0)} Nm, turația roții la v_max "
+                f"= {ro(n_roata_vmax, 0)} rot/min. Pentru fiecare motor, 1/i_rd = n_max / {ro(n_roata_vmax, 0)}; "
+                f"numărul de motoare rezultă din puterea de vârf, din puterea continuă și din cuplul la roți "
+                f"(M_vârf · 1/i_rd · 0,99).")
+    if cat.get("concluzie"):
+        rows.append("")
+        rows.append(cat["concluzie"])
+    return "\n".join(rows)
 
 
 def actualizeaza_readme(cale, T):
@@ -599,7 +709,13 @@ def main():
     out = RADACINA / "CCA_Etapa2_Calcule.xlsx"
     excel_p2_p3.construieste(tab, rez, C, CELULA, out, SURSE)
     print("salvat", out)
-    actualizeaza_readme(RADACINA / "README.md", tabele_readme(tab, rez))
+    cale_m = RADACINA / "rezultate" / "rezultate_matlab.json"
+    mat = json.loads(cale_m.read_text(encoding="utf-8")) if cale_m.exists() else None
+    T = tabele_readme(tab, rez, mat)
+    tm = tabela_motoare(rez, RADACINA / "date" / "motoare_catalog.json")
+    if tm:
+        T["motoare"] = tm
+    actualizeaza_readme(RADACINA / "README.md", T)
     for k in ("medie", "gt63"):
         R2, R3, B = rez[k]["p2"], rez[k]["p3"], rez[k]["baterie"]
         print(f"{k:6s} a={R2['a']:.3f} ta={R2['ta']:.3f} Pmax={R2['P_max']/1e3:.2f} kW Pnom={R2['P_nom']/1e3:.2f} kW "

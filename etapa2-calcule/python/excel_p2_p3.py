@@ -152,7 +152,8 @@ def foaie_date(wb, tab):
     ws.freeze_panes = ws.cell(row=r0, column=3)
     nota = rn + 2
     ws.cell(row=nota, column=2, value=(
-        "Note: Lucid Air Sapphire – 1,89 s este 0–60 mph (96,56 km/h). Autonomia și consumul se mediază doar pe "
+        "Note: Lucid Air Sapphire – 1,89 s este 0–60 mph (96,56 km/h). Rimac (și, după convenția americană, Tesla și "
+        "Lucid) declară timpi cu „1-foot rollout”; GT 63: valoarea standard 2,4 s. Autonomia și consumul se mediază doar pe "
         "valorile WLTP (Xiaomi și Yangwang declară ciclul chinezesc CLTC, mai optimist). Lotus nu publică un consum "
         "WLTP separat pentru Emeya R. Tesla și Maserati: autonomie și consum din EV Database (sursă secundară). "
         "Raza roții se calculează din anvelopa punții spate: r = D_jantă/2 + lățime·profil.")).font = F_NOTE
@@ -164,17 +165,20 @@ IPOTEZE = [
     ("c_g", "Accelerația gravitațională g", "m/s²", "g", "Valoare uzuală (g_n = 9,80665 m/s²)"),
     ("c_rho", "Densitatea aerului ρ (condiții normale: 0 °C, 101 325 Pa)", "kg/m³", "rho",
      "ρ = p/(R_s·T) = 101325/(287,05·273,15)"),
-    ("c_mu_f", "Coeficient de frecare la rulare µf", "-", "mu_f", "Exemplul din curs (P2, slide 5)"),
-    ("c_mu_a", "Coeficient de aderență µa", "-", "mu_a", "Exemplul din curs (P2, slide 5)"),
+    ("c_mu_f", "Coeficient de frecare la rulare µf", "-", "mu_f",
+     "Exemplul din curs (P2, slide 5); f = 0,01·(1 + V/160) dă 0,013 la 50 km/h (Ehsani)"),
+    ("c_mu_a", "Coeficient de aderență µa", "-", "mu_a",
+     "Exemplul din curs (P2, slide 5); asfalt uscat la ≈ 90 km/h; anvelope bune: 1,0–1,2"),
     ("c_alpha", "Unghiul de înclinare al drumului α", "rad", "alpha", "Drum drept (simplificare curs)"),
     ("c_Vv", "Viteza vântului Vv", "m/s", "Vv", "Fără vânt (simplificare curs)"),
-    ("c_r", "Raza dinamică a roții r", "m", "r", "Media razelor anvelopelor spate ≈ 0,36 m × 0,97 ≈ 0,35 m"),
+    ("c_r", "Raza dinamică a roții r", "m", "r", "Media razelor anvelopelor spate ≈ 0,364 m × 0,97 ≈ 0,35 m"),
     ("c_pp", "Pierderi în reductor Pp / Pax", "-", "pp", "Pp = Pax/100 (curs, P2 slide 7)"),
-    ("c_Va_kmh", "Viteza Va (sfârșitul accelerării)", "km/h", "Va_kmh", "0–100 km/h"),
+    ("c_Va_kmh", "Viteza Va (punct pe rampa de accelerare)", "km/h", "Va_kmh", "Sfârșitul probei 0–100 km/h"),
     ("c_n_max", "Turația maximă a mașinii electrice la v_max", "rot/min", "n_max",
-     "Alegere de proiectare (motoarele clasei: 13 000–20 000 rot/min)"),
+     "Alegere de proiectare (motoarele clasei: GT 63 spate > 13 000 / față > 15 000 rot/min; "
+     "Xiaomi V8s 27 200 rot/min)"),
     ("c_V1_kmh", "Viteza constantă a ciclului P3, V1", "km/h", "V1_kmh", "Curs, P3 slide 4"),
-    ("c_eta", "Randament η_el-mec = η_mec-el", "-", "eta", "Curs, P3 slide 8"),
+    ("c_eta", "Randament η_el-mec = η_mec-el", "-", "eta", "Curs, P3 slide 8 (pierderi tipice ale acționării 15–20 %)"),
     ("c_rez", "Rezervă de energie în baterie", "-", "rezerva", "Curs, P3 slide 8"),
     ("c_U_tinta", "Tensiunea nominală țintă a bateriei", "V", "U_bat_tinta", "Arhitectura de 800 V a clasei"),
     ("c_k_masa", "Masa maximă a bateriei / masa vehiculului", "-", "k_masa_bat", "Curs, P3 slide 9"),
@@ -193,7 +197,8 @@ CELULA_CAMPURI = [
 def foaie_ipoteze(wb, C, cel):
     ws = wb.create_sheet("Ipoteze")
     titlu(ws, "Ipoteze și constante de calcul",
-          "Celulele albastre se pot modifica; toate foile de calcul folosesc numele definite din coloana A.")
+          "Valorile scrise cu albastru (coloana C) se pot modifica; toate foile de calcul folosesc numele "
+          "definite din coloana A.")
     antet(ws, 4, ["Nume definit", "Mărime", "Valoare", "Unitate", "Justificare / sursă"], [14, 52, 12, 10, 70])
     r = 5
     for nume, et, um, cheie, just in IPOTEZE:
@@ -282,7 +287,8 @@ def foaie_p2(wb, col, rm, rgt):
     F.rand_("P_doc", "", "Puterea maximă declarată", "P_doc", "W", src("P_W"), "", "0")
     F.rand_("r", "", "Raza roții", "r", "m", "=c_r", "Ipoteze", "0.000")
     F.sectiune("Pașii 1–4: forța de tracțiune în punctul (Va, ta) și aderența")
-    F.rand_("Va", "1–2", "Viteza la sfârșitul accelerării", "Va", "m/s", "=c_Va_kmh/3.6", "Va = 100 km/h")
+    F.rand_("Va", "1–2", "Viteza Va (punct pe rampa de accelerare)", "Va", "m/s", "=c_Va_kmh/3.6",
+            "Va = 100 km/h (sfârșitul probei 0–100 km/h)")
     F.rand_("ta_doc", "2", "Timpul de accelerare (documentare)", "ta", "s", "={Va}/{a_doc}", "ta = Va / a")
     F.rand_("Ff", "3", "Forța de frecare la rulare", "Ff", "N", "=c_mu_f*{M}*c_g*COS(c_alpha)", "Ff = µf·M·g·cos α", "0.00")
     F.rand_("Fra_Va", "3", "Rezistența aerodinamică la Va", "Fra", "N", "=0.5*c_rho*{S}*{Cx}*({Va}-c_Vv)^2",
@@ -292,6 +298,8 @@ def foaie_p2(wb, col, rm, rgt):
     F.rand_("Ft_doc", "3", "Forța de tracțiune necesară", "Ft", "N", "={Fra_Va}+{Ff}+{Gt}+{Fi_doc}",
             "Ft = Fra + Ff + Gt + M·a", "0.00")
     F.rand_("Fa", "4", "Forța de aderență", "Fa", "N", "=c_mu_a*{M}*c_g*COS(c_alpha)", "Fa = µa·M·g·cos α", "0.00")
+    F.rand_("mu_nec", "4", "Coeficientul de aderență necesar pentru a_doc", "µ_nec", "-",
+            "={Ft_doc}/({M}*c_g*COS(c_alpha))", "µ_nec = Ft / (M·g·cos α)", "0.000")
     F.rand_("ader", "4", "Aderența respectată? (Ft ≤ Fa)", "", "", '=IF({Ft_doc}<={Fa},"DA","NU")',
             "Dacă NU: Ft = Fa și se recalculează accelerația", "@")
     F.rand_("a", "4", "Accelerația realizabilă", "a", "m/s²",
@@ -322,7 +330,7 @@ def foaie_p2(wb, col, rm, rgt):
     F.rand_("Ft_vmax0", "7", "Forța de tracțiune la Vmax", "Ft", "N", "={Fra_vmax}+{Ff}+{Gt}", "Ft = Fra + Ff + Gt",
             "0.00")
     F.rand_("ader_vmax", "8", "Aderența respectată la Vmax?", "", "", '=IF({Ft_vmax0}<={Fa},"DA","NU")',
-            "Dacă NU se reduce Vmax până la Ft = Fa", "@")
+            "Dacă NU, se reduce Vmax până la Ft = Fa", "@")
     F.rand_("vmax_ef", "8", "Viteza maximă de calcul", "Vmax", "m/s",
             "=IF({Ft_vmax0}<={Fa},{vmax},SQRT(({Fa}-{Ff}-{Gt})/(0.5*c_rho*{S}*{Cx}))+c_Vv)", "", "0.000")
     F.rand_("Ft_vmax", "8", "Forța de tracțiune de calcul la Vmax", "Ft", "N", "=IF({Ft_vmax0}<={Fa},{Ft_vmax0},{Fa})",
@@ -339,6 +347,10 @@ def foaie_p2(wb, col, rm, rgt):
     F.rand_("Pax_fara", "", "Pax cu accelerația documentată (fără limita de aderență)", "", "kW",
             "={Ft_doc}*{Va}/(1-c_pp)/1000", "aceeași formulă cu a_doc", "0.0")
     F.rand_("Pdoc_kW", "", "Puterea maximă declarată (documentare)", "", "kW", "={P_doc}/1000", "", "0.0")
+    F.rand_("Max_fara", "", "Max cu accelerația documentată (fără limita de aderență)", "", "Nm",
+            "={Pax_fara}*1000/{Om_ax_Va}", "aceeași formulă cu a_doc", "0.0")
+    F.rand_("cuplu_doc", "", "Cuplul maxim declarat (documentare)", "", "Nm",
+            [f"={DS}!{col['cuplu_Nm']}{rm}", f"={DS}!{col['cuplu_Nm']}{rgt}"], "", "0.0")
     F.rand_("raport", "", "Vmax / Va (domeniu de putere constantă necesar)", "", "-", "={vmax_ef}/{Va}", "", "0.00")
     return F
 
@@ -355,7 +367,8 @@ def foaie_p3(wb, col, rm, rgt, F2):
     F.rand_("aut", "", "Cerința de autonomie", "d", "m", [f"={DS}!{col['aut_km']}{rm}*1000",
                                                            f"={DS}!{col['aut_km']}{rgt}*1000"], "media din documentare",
             "0")
-    F.rand_("a_P2", "2", "Accelerația calculată în P2", "a", "m/s²", [f"={F2.ref('a', 0)}", f"={F2.ref('a', 1)}"],
+    F.rand_("a_P2", "2", "Accelerația din sesiunea precedentă (P2: a = Va/ta)", "a", "m/s²",
+            [f"={F2.ref('a_doc', 0)}", f"={F2.ref('a_doc', 1)}"],
             "sesiunea precedentă (P2, pasul 4)", "0.000")
     F.sectiune("Pașii 1–6: puterea P1 (cu a), P1' (fără a), timpul t1")
     F.rand_("V1", "1", "Viteza constantă a ciclului", "V1", "m/s", "=c_V1_kmh/3.6", "V1 = 50 km/h", "0.0000")
@@ -370,7 +383,7 @@ def foaie_p3(wb, col, rm, rgt, F2):
     F.rand_("Ft1", "3", "Forța de tracțiune în (V1, t1)", "Ft1", "N", "={Fra}+{Ff}+{Gt}+{M}*{a}",
             "Ft1 = Fra + Ff + Gt + M·a", "0.00")
     F.rand_("P1", "3", "Puterea P1 (cu accelerație)", "P1", "W", "={Ft1}*{V1}", "P1 = Ft1·V1", "0.0", True)
-    F.rand_("Ft1p", "5", "Forța de tracțiune la V1 constant", "Ft1'", "N", "={Fra}+{Ff}+{Gt}", "Ft1' = Fra + Ff + Gt",
+    F.rand_("Ft1p", "5", "Forța de tracțiune la V1 constantă", "Ft1'", "N", "={Fra}+{Ff}+{Gt}", "Ft1' = Fra + Ff + Gt",
             "0.000")
     F.rand_("P1p", "5", "Puterea P1' (fără accelerație)", "P1'", "W", "={Ft1p}*{V1}", "P1' = Ft1'·V1", "0.00", True)
     F.rand_("t1", "6", "Timpul de accelerare până la V1", "t1", "s", "={V1}/{a}", "t1 = V1 / a", "0.00000", True)
@@ -379,17 +392,23 @@ def foaie_p3(wb, col, rm, rgt, F2):
     for n in (100, 1000):
         sh = f"'P3 n={n}'"
         F.rand_(f"P01_{n}", "7", f"Puterea medie discretizată, n = {n}", "P01-med", "W",
-                [f"={sh}!C4", f"={sh}!H4"], f"(1/n)·Σ Fti·Vti (foaia P3 n={n})", "0.0")
+                [f"={sh}!C4", f"={sh}!H4"], f"(1/n)·Σ(i=1..n) Fti·Vti – începutul intervalelor (foaia P3 n={n})",
+                "0.0")
+        F.rand_(f"W01med_{n}", "8", f"Energia W01-med, n = {n}", "W01-med", "Ws", f"={{P01_{n}}}*{{t1}}",
+                "W01-med = P01-med·t1", "0.0")
         F.rand_(f"W01_{n}", "8", f"Energia W01 discretizată, n = {n}", "W01", "Ws",
-                [f"={sh}!C5", f"={sh}!H5"], "Σ Pti·Δti", "0.0")
+                [f"={sh}!C5", f"={sh}!H5"], "Σ(i=1..n+1) Pti·Δti – sfârșitul intervalelor (P(0) = 0)", "0.0")
     F.rand_("W01_ex", "8", "Energia W01 exactă (integrală analitică)", "W01", "Ws",
             "=({Ff}+{Gt}+{M}*{a})*{a}*{t1}^2/2+0.5*c_rho*{S}*{Cx}*{a}^3*{t1}^4/4",
             "∫(A + B·v²)·v dt, v = a·t (Vv = 0)", "0.0")
-    F.rand_("err100", "8", "Eroarea W01 pentru n = 100", "", "%", "=({W01_100}-{W01_ex})/{W01_ex}*100", "", "0.0000")
-    F.rand_("err1000", "8", "Eroarea W01 pentru n = 1000", "", "%", "=({W01_1000}-{W01_ex})/{W01_ex}*100", "", "0.0000")
+    for n in (100, 1000):
+        F.rand_(f"errm{n}", "8", f"Eroarea W01-med pentru n = {n}", "", "%",
+                f"=({{W01med_{n}}}-{{W01_ex}})/{{W01_ex}}*100", "subestimare", "0.0000")
+        F.rand_(f"err{n}", "8", f"Eroarea W01 pentru n = {n}", "", "%",
+                f"=({{W01_{n}}}-{{W01_ex}})/{{W01_ex}}*100", "supraestimare", "0.0000")
     F.rand_("Wmed", "8", "Energia cu puterea medie", "Wmed", "Ws", "={Pmed}*{t1}", "Wmed = Pmed·t1", "0.0")
-    F.rand_("W01med", "8", "Energia cu P01-med (n = 1000)", "W01-med", "Ws", "={P01_1000}*{t1}", "W01-med = P01-med·t1",
-            "0.0")
+    F.rand_("W01med", "8", "Energia W01-med folosită la comparație (n = 1000)", "W01-med", "Ws", "={W01med_1000}",
+            "", "0.0")
     F.rand_("W01", "8", "Energia W01 folosită mai departe (n = 1000)", "W01", "Ws", "={W01_1000}", "", "0.0", True)
     F.sectiune("Pașii 9–12: distanțe și energia mecanică pe ciclu")
     F.rand_("d1", "9", "Distanța de accelerare", "d1", "m", "={V1}*{t1}/2", "d1 = V1·t1/2", "0.0000")
@@ -412,7 +431,7 @@ def foaie_p3(wb, col, rm, rgt, F2):
     F.rand_("Wstoc_kWh", "", "Energia stocată necesară", "", "kWh", "={Wstoc}/3600000", "", "0.000")
     F.rand_("cons", "", "Consum echivalent al ciclului", "", "kWh/100 km", "={Wstoc}/{aut}*100/3600", "", "0.00")
     F.rand_("cons_doc", "", "Consum mediu din documentare", "", "kWh/100 km",
-            [f"={DS}!{col['cons_kWh100']}{rm}", f"={DS}!{col['cons_kWh100']}{rgt}"], "WLTP / EPA / CLTC", "0.00")
+            [f"={DS}!{col['cons_kWh100']}{rm}", f"={DS}!{col['cons_kWh100']}{rgt}"], "media WLTP (CLTC exclus)", "0.00")
     F.rand_("bat_doc", "", "Capacitatea bateriei din documentare", "", "kWh",
             [f"={DS}!{col['baterie_kWh']}{rm}", f"={DS}!{col['baterie_kWh']}{rgt}"], "", "0.0")
     return F
@@ -421,8 +440,9 @@ def foaie_p3(wb, col, rm, rgt, F2):
 def foaie_discretizare(wb, n, F3):
     ws = wb.create_sheet(f"P3 n={n}")
     titlu(ws, f"P3 – discretizarea intervalului [0, t1] în n = {n} intervale egale",
-          "Pe fiecare interval [t(i−1), t(i)] forța Fti și viteza Vti sunt constante, egale cu valorile din t(i). "
-          "Rândul i = 0 este t = 0 (P = 0), deci Σ pe cele n+1 puncte = Σ pe cele n intervale.")
+          "Indicii ca în curs (și în Matlab): i = 1 … n+1, t_i = (i − 1)·Δt. P01-med = (1/n)·Σ(i=1..n) Fti·Vti "
+          "folosește valorile de la începutul intervalelor; W01 = Σ(i=1..n+1) Pti·Δt, cu P(t_1) = 0, folosește "
+          "valorile de la sfârșitul intervalelor. Cele două sume încadrează valoarea exactă.")
     blocuri = (("A", 0, "Vehicul mediu"), ("F", 1, "GT 63"))
     r0 = 9
     for c0, k, et in blocuri:
@@ -433,7 +453,7 @@ def foaie_discretizare(wb, n, F3):
         rot = {"t1": F3.ref("t1", k), "a": F3.ref("a", k), "M": F3.ref("M", k), "S": F3.ref("S", k),
                "Cx": F3.ref("Cx", k), "Ff": F3.ref("Ff", k), "Gt": F3.ref("Gt", k)}
         ws[f"{ci[1]}4"] = "P01-med [W]"
-        ws[f"{ci[2]}4"] = f"=SUM({ci[4]}{r0 + 1}:{ci[4]}{r0 + n})/{n}"
+        ws[f"{ci[2]}4"] = f"=SUM({ci[4]}{r0}:{ci[4]}{r0 + n - 1})/{n}"
         ws[f"{ci[1]}5"] = "W01 [Ws]"
         ws[f"{ci[2]}5"] = f"=SUM({ci[4]}{r0}:{ci[4]}{r0 + n})*{ci[2]}6"
         ws[f"{ci[1]}6"] = "Δt [s]"
@@ -451,8 +471,8 @@ def foaie_discretizare(wb, n, F3):
         dt, a = f"${ci[2]}$6", f"${ci[2]}$7"
         for i in range(n + 1):
             r = r0 + i
-            ws[f"{ci[0]}{r}"] = i
-            ws[f"{ci[1]}{r}"] = f"={ci[0]}{r}*{dt}"
+            ws[f"{ci[0]}{r}"] = i + 1
+            ws[f"{ci[1]}{r}"] = f"=({ci[0]}{r}-1)*{dt}"
             ws[f"{ci[2]}{r}"] = f"={a}*{ci[1]}{r}"
             ws[f"{ci[3]}{r}"] = (f"=0.5*c_rho*{rot['S']}*{rot['Cx']}*({ci[2]}{r}-c_Vv)^2+{rot['Ff']}+{rot['Gt']}"
                                  f"+{rot['M']}*{a}")
@@ -488,13 +508,22 @@ def foaie_baterie(wb, F2, F3, col, rm, rgt):
     F.rand_("Umin", "", "Tensiunea minimă (descărcată)", "", "V", "={Ns}*cel_U_min", "", "0.0")
     F.rand_("Npe", "", "Ramuri în paralel – din energie", "Np", "-", "=ROUNDUP({Nmin}/{Ns},0)", "", "0")
     F.rand_("Pel", "", "Puterea electrică maximă cerută bateriei", "", "W", "={Pmax}/c_eta", "P_max / η", "0")
-    F.rand_("Ibat", "", "Curentul maxim al bateriei", "I_bat", "A", "={Pel}/{Unom}", "", "0.0")
+    F.rand_("Ibat_nom", "", "Curentul bateriei la P_max și tensiunea nominală", "I_bat", "A", "={Pel}/{Unom}", "", "0.0")
+    F.rand_("Ibat", "", "Curentul maxim al bateriei (la tensiunea minimă)", "I_bat,max", "A", "={Pel}/{Umin}",
+            "caz defavorabil: baterie aproape descărcată", "0.0", True)
     F.rand_("Npc", "", "Ramuri în paralel – din curent", "Np", "-", "=ROUNDUP({Ibat}/cel_I,0)", "", "0")
     F.rand_("Np", "", "Ramuri în paralel (alese)", "Np", "-", "=MAX({Npe},{Npc})", "", "0", True)
     F.rand_("N", "", "Numărul total de celule", "N", "-", "={Ns}*{Np}", "", "0", True)
     F.rand_("Wreal", "", "Energia instalată", "", "kWh", "={N}*{Wcel}/3600000", "", "0.00", True)
     F.rand_("Cap", "", "Capacitatea bateriei", "", "Ah", "={Np}*cel_Cap", "", "0.0")
-    F.rand_("Icel", "", "Curentul pe celulă la P_max", "", "A", "={Ibat}/{Np}", "", "0.00")
+    F.rand_("Icel", "", "Curentul pe celulă la P_max și U_min", "", "A", "={Ibat}/{Np}", "max. cel_I (fișa celulei)",
+            "0.00")
+    F.rand_("Icel_nom", "", "Curentul pe celulă la P_max și U_nom", "", "A", "={Ibat_nom}/{Np}", "", "0.00")
+    F.rand_("Pdoc", "", "Puterea maximă declarată (documentare)", "P_doc", "W",
+            [f"={DS}!{col['P_W']}{rm}", f"={DS}!{col['P_W']}{rgt}"], "verificare informativă", "0")
+    F.rand_("Icel_doc_nom", "", "Curentul pe celulă la P_doc și U_nom", "", "A", "={Pdoc}/c_eta/{Unom}/{Np}", "", "0.00")
+    F.rand_("Icel_doc_min", "", "Curentul pe celulă la P_doc și U_min", "", "A", "={Pdoc}/c_eta/{Umin}/{Np}",
+            "> cel_I ⇒ puterea declarată nu poate fi livrată la descărcare avansată", "0.00")
     F.sectiune("Verificarea masei")
     F.rand_("mcel", "", "Masa celulelor", "", "kg", "={N}*cel_m", "", "0.0", True)
     F.rand_("mpac", "", "Masa estimată a pachetului", "", "kg", "={mcel}/cel_kcp", "celule / raport celule-pachet", "0.0")
@@ -511,13 +540,14 @@ def foaie_sinteza(wb, F2, F3, FB):
           "Valorile provin din foile P2, P3 și Baterie. Vehiculul mediu este baza temei; GT 63 este comparația.")
     antet(ws, 4, ["Subsistem", "Mărime", "Unitate", "Vehicul mediu", "GT 63 (referință)"], [26, 52, 12, 16, 16])
     rows = [
-        ("Mașina electrică", "Puterea maximă (vârf)", "kW", F2, "Pmax_kW", "0.0"),
-        ("", "Puterea nominală (Vmax constant)", "kW", F2, "Pnom_kW", "0.0"),
+        ("Mașina electrică", "Tipul mașinii", "-", None, "=\"MCA – sincronă cu magneți permanenți\"", "@"),
+        ("", "Puterea maximă (vârf)", "kW", F2, "Pmax_kW", "0.0"),
+        ("", "Puterea nominală (la Vmax constantă)", "kW", F2, "Pnom_kW", "0.0"),
         ("", "Cuplul maxim la ax", "Nm", F2, "Max", "0.0"),
         ("", "Turația de bază", "rot/min", F2, "n_ax_Va", "0"),
         ("", "Turația maximă", "rot/min", None, "=c_n_max", "0"),
-        ("Reductor", "Raportul i_rd = Ωr/Ωax", "-", F2, "i_rd", "0.00000"),
-        ("", "Raportul de reducere n_motor/n_roată", "-", F2, "k_rd", "0.000"),
+        ("Reductor", "i_rd = Ωr/Ωax", "-", F2, "i_rd", "0.00000"),
+        ("", "1/i_rd = n_motor/n_roată", "-", F2, "k_rd", "0.000"),
         ("Vehicul", "Accelerația realizabilă (aderență)", "m/s²", F2, "a", "0.000"),
         ("", "Timpul 0–100 km/h realizabil", "s", F2, "ta", "0.00"),
         ("Sistem de stocare", "Energia necesară în baterie", "kWh", F3, "Wbat_kWh", "0.00"),
@@ -525,8 +555,9 @@ def foaie_sinteza(wb, F2, F3, FB):
         ("", "Celule (serie × paralel = total)", "-", None, "cfg", "@"),
         ("", "Energia instalată", "kWh", FB, "Wreal", "0.00"),
         ("", "Tensiunea nominală (min – max)", "V", None, "U", "@"),
-        ("Convertor / invertor", "Curentul maxim al bateriei", "A", FB, "Ibat", "0"),
         ("", "Masa celulelor / pachetului (estimare)", "kg", None, "m", "@"),
+        ("Convertor / invertor", "Tip", "-", None, "=\"invertor trifazat (DC-AC)\"", "@"),
+        ("", "Curentul bateriei la U_nom / U_min", "A", None, "I", "@"),
     ]
     r = 5
     for sub, et, um, F, cheie, fmt in rows:
@@ -544,6 +575,8 @@ def foaie_sinteza(wb, F2, F3, FB):
                        f'&TEXT({FB.ref("Umax", k)},"0")&")"')
             elif cheie == "m":
                 val = f'=TEXT({FB.ref("mcel", k)},"0")&" / "&TEXT({FB.ref("mpac", k)},"0")'
+            elif cheie == "I":
+                val = f'=TEXT({FB.ref("Ibat_nom", k)},"0")&" / "&TEXT({FB.ref("Ibat", k)},"0")'
             else:
                 val = cheie
             c = ws[f"{L}{r}"]

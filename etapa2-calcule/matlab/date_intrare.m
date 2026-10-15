@@ -15,14 +15,19 @@ fid = fopen(fisier_csv, 'r', 'n', 'UTF-8');
 if fid < 0
     error('Nu pot deschide %s', fisier_csv);
 end
-antet = strsplit(strtrim(fgetl(fid)), ',');
+antet = strsplit(strtrim(fgetl(fid)), ',', 'CollapseDelimiters', false);
 linii = {};
 while true
     l = fgetl(fid);
     if ~ischar(l), break; end
     l = strtrim(l);
     if isempty(l), continue; end
-    linii{end+1} = strsplit(l, ','); %#ok<AGROW>
+    linii{end+1} = strsplit(l, ',', 'CollapseDelimiters', false); %#ok<AGROW>
+    if numel(linii{end}) ~= numel(antet)
+        fclose(fid);
+        error('Linia %d din %s are %d coloane, antetul are %d', numel(linii), fisier_csv, ...
+              numel(linii{end}), numel(antet));
+    end
 end
 fclose(fid);
 
@@ -97,6 +102,6 @@ G.autonomie  = T.aut_km(k) * 1e3;
 G.consum_doc = T.cons_Wsm(k);
 G.Cx         = T.Cx(k);
 G.S          = T.A_m2(k);
-G.r_static   = V.r_static;   % dimensiunea anvelopelor GT 63 EV nu este publicată
+G.r_static   = T.r_static_m(k);   % anvelope 295/40 R20 spate (ADAC, sursă secundară)
 D.gt63 = G;
 end

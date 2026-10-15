@@ -2,7 +2,8 @@
 % Rulare: din folderul matlab/, comanda  main_p2
 % Rezultate: tabel în Command Window + figurile P2 (dacă GRAFICE = true).
 
-if ~exist('GRAFICE', 'var'), GRAFICE = true; end
+% Figurile se desenează implicit; pentru a le opri: GRAFICE = false; main_p2
+if exist('GRAFICE', 'var'), grafice = GRAFICE; else, grafice = true; end
 C = constante();
 D = date_intrare();
 
@@ -31,7 +32,7 @@ for R = R2
     fprintf('Pas 3  Fra = %.1f N, Ff = %.1f N, Gt = %.1f N, M*a = %.1f N  ->  Ft = %.1f N\n', ...
             R.Fra_Va, R.Ff, R.Gt, R.Ft_doc - R.Fra_Va - R.Ff - R.Gt, R.Ft_doc);
     if R.aderenta_ok, s = 'DA'; else, s = 'NU'; end
-    fprintf('Pas 4  Fa = %.1f N; Ft <= Fa: %s', R.Fa, s);
+    fprintf('Pas 4  Fa = %.1f N; Ft <= Fa: %s (aderența necesară mu = %.2f)', R.Fa, s, R.mu_necesar);
     if ~R.aderenta_ok
         fprintf('  ->  Ft = Fa, a = %.2f m/s2, ta = %.2f s', R.a, R.ta);
     end
@@ -45,8 +46,9 @@ for R = R2
     fprintf('Pas 8  Ft <= Fa la v_max: %s; Pr = %.1f kW, Pax = %.1f kW, Max(v_max) = %.1f Nm\n', ...
             s, R.Pr_vmax/1e3, R.Pax_nom/1e3, R.Max_vmax);
     fprintf('Pas 9  P_max = %.1f kW (pas 5),  P_nom = %.1f kW (pas 8)\n', R.P_max/1e3, R.P_nom/1e3);
-    fprintf('Coerență: cu a_doc fără limita de aderență Pax = %.1f kW; documentare: %.1f kW\n', ...
+    fprintf('Coerență: cu a_doc fără limita de aderență Pax = %.1f kW (documentare: %.1f kW), ', ...
             R.Pax_fara_aderenta/1e3, R.P_doc/1e3);
+    fprintf('Max = %.1f Nm (documentare: %.1f Nm)\n', R.Max_fara_aderenta, R.cuplu_doc);
 end
 
 %% 3. Sensibilitate la coeficientul de aderență și la densitatea aerului (vehicul mediu)
@@ -60,20 +62,25 @@ for mu = [0.8 1.0 1.2]
     end
 end
 
-%% 4. Figuri
-if GRAFICE
-    v = linspace(0, D.medie.vmax, 300);
+%% 4. Figuri (accelerarea se desenează doar pe 0–Va, rularea cu viteză constantă pe 0–v_max)
+if grafice
     Rm = R2(1);
-    F_acc = forte_rezistente(v, Rm.a, D.medie, C);
+    v  = linspace(0, D.medie.vmax, 300);
+    va = linspace(0, Rm.Va, 100);
+    F_doc = forte_rezistente(va, Rm.a_doc, D.medie, C);
+    F_acc = forte_rezistente(va, Rm.a, D.medie, C);
     F_cst = forte_rezistente(v, 0, D.medie, C);
     figure('Name', 'P2 – forțe');
-    plot(v*3.6, F_acc.Ft/1e3, v*3.6, F_cst.Ft/1e3, [0 v(end)*3.6], [1 1]*F_acc.Fa/1e3, '--');
+    plot(va*3.6, F_doc.Ft/1e3, ':', va*3.6, F_acc.Ft/1e3, v*3.6, F_cst.Ft/1e3, ...
+         [0 v(end)*3.6], [1 1]*F_acc.Fa/1e3, 'k--', Rm.Va*3.6, Rm.Ft/1e3, 'o', Rm.vmax*3.6, Rm.Ft_vmax/1e3, 's');
     grid on; xlabel('v [km/h]'); ylabel('F [kN]');
-    legend('F_t cu accelerația a', 'F_t la viteză constantă', 'F_a (aderență)', 'Location', 'best');
+    legend('F_t cu a_{doc}', 'F_t cu a limitat de aderență', 'F_t la viteză constantă', 'F_a (aderență)', ...
+           'Location', 'best');
     title('P2 – forța de tracțiune necesară, vehicul mediu');
     figure('Name', 'P2 – putere');
-    plot(v*3.6, F_acc.Ft.*v/(1-C.pp)/1e3, v*3.6, F_cst.Ft.*v/(1-C.pp)/1e3);
+    plot(va*3.6, F_doc.Ft.*va/(1-C.pp)/1e3, ':', va*3.6, F_acc.Ft.*va/(1-C.pp)/1e3, ...
+         v*3.6, F_cst.Ft.*v/(1-C.pp)/1e3, Rm.Va*3.6, Rm.P_max/1e3, 'o', Rm.vmax*3.6, Rm.P_nom/1e3, 's');
     grid on; xlabel('v [km/h]'); ylabel('P_{ax} [kW]');
-    legend('cu accelerația a', 'la viteză constantă', 'Location', 'best');
+    legend('cu a_{doc}', 'cu a limitat de aderență (P_{max})', 'la viteză constantă (P_{nom})', 'Location', 'best');
     title('P2 – puterea la axul mașinii electrice, vehicul mediu');
 end
