@@ -1,0 +1,63 @@
+Verificarea structurală în GNU Octave 8.4 (test_constructori.m), 11.11.2026: pentru fiecare model – numărul de blocuri
+și legături și nodurile electrice (bornele legate împreună). Valorile numerice ale simulărilor nu au sens aici
+(simulatorul întoarce semnale fictive), de aceea nu sunt incluse.
+
+--- c3_A ---
+   [mock] cca_c3_mcc_A: 37 blocuri, 48 legături, 0 noduri electrice
+--- c3_D ---
+   [mock] cca_c3_mcc_D: 37 blocuri, 48 legături, 0 noduri electrice
+--- masina ---
+   [mock] cca_sps_masina_ym720: 15 blocuri, 18 legături, 2 noduri electrice
+      nod  1: Masina/l1, Ua/r1
+      nod  2: Masa/l1, Masina/r1, Ua/l1
+--- dcdc ---
+   [mock] cca_sps_dcdc_bidirectional: 96 blocuri, 134 legături, 14 noduri electrice
+      nod  1: Rbat/l1, Ubat/r1
+      nod  2: Ibat_m/l1, Rbat/r1
+      nod  3: Cdc/r1, Isarc/r1, Masa/l1, Sjos1/r1, Sjos2/r1, Sjos3/r1, Sjos4/r1, Ubat/l1, Ubat_m/l2, Udc_m/l2
+      nod  4: IL1_m/l1, L1/r1
+      nod  5: IL1_m/r1, Sjos1/l1, Ssus1/r1
+      nod  6: IL2_m/l1, L2/r1
+      nod  7: IL2_m/r1, Sjos2/l1, Ssus2/r1
+      nod  8: IL3_m/l1, L3/r1
+      nod  9: IL3_m/r1, Sjos3/l1, Ssus3/r1
+      nod 10: Ibat_m/r1, L1/l1, L2/l1, L3/l1, L4/l1, Ubat_m/l1
+      nod 11: IL4_m/l1, L4/r1
+      nod 12: IL4_m/r1, Sjos4/l1, Ssus4/r1
+      nod 13: Isarc/l1, Isarc_m/r1
+      nod 14: Cdc/l1, Isarc_m/l1, Ssus1/l1, Ssus2/l1, Ssus3/l1, Ssus4/l1, Udc_m/l1
+   [mock] avertisment: ieșire nefolosită Ibat_z/o1
+--- incarcator ---
+   [mock] cca_sps_incarcator_cccv: 26 blocuri, 31 legături, 5 noduri electrice
+      nod  1: S/l1, Udc_PFC/r1
+      nod  2: Baterie/r1, Dioda/l1, Masa/l1, U_m/l2, Udc_PFC/l1
+      nod  3: Dioda/r1, Lc/l1, S/r1
+      nod  4: I_m/l1, Lc/r1
+      nod  5: Baterie/l1, I_m/r1, U_m/l1
+--- ansamblu ---
+   [mock] cca_sps_ansamblu: 143 blocuri, 201 legături, 17 noduri electrice
+      nod  1: Rbat/l1, Ubat/r1
+      nod  2: Ibat_m/l1, Rbat/r1
+      nod  3: Cdc/r1, I2mot/r1, Masa/l1, SA_jos/r1, SB_jos/r1, Sjos1/r1, Sjos2/r1, Sjos3/r1, Sjos4/r1, Ubat/l1, Ubat_m/l2, Udc_m/l2
+      nod  4: IL1_m/l1, L1/r1
+      nod  5: IL1_m/r1, Sjos1/l1, Ssus1/r1
+      nod  6: IL2_m/l1, L2/r1
+      nod  7: IL2_m/r1, Sjos2/l1, Ssus2/r1
+      nod  8: IL3_m/l1, L3/r1
+      nod  9: IL3_m/r1, Sjos3/l1, Ssus3/r1
+      nod 10: Ibat_m/r1, L1/l1, L2/l1, L3/l1, L4/l1, Ubat_m/l1
+      nod 11: IL4_m/l1, L4/r1
+      nod 12: IL4_m/r1, Sjos4/l1, Ssus4/r1
+      nod 13: Ihb_m/r1, SA_sus/l1, SB_sus/l1
+      nod 14: Masina/l1, SA_jos/l1, SA_sus/r1
+      nod 15: Masina/r1, SB_jos/l1, SB_sus/r1
+      nod 16: Cdc/l1, I2mot_m/l1, Ihb_m/l1, Ssus1/l1, Ssus2/l1, Ssus3/l1, Ssus4/l1, Udc_m/l1
+      nod 17: I2mot/l1, I2mot_m/r1
+   [mock] avertisment: ieșire nefolosită Ibat_z/o1
+=== Rezumat ===
+  c3_A         OK      0.1 s
+  c3_D         OK      0.1 s
+  masina       OK      0.1 s
+  dcdc         OK      0.4 s
+  incarcator   OK      0.1 s
+  ansamblu     OK      52.6 s

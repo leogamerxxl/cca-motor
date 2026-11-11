@@ -42,13 +42,9 @@ for q = 1:N
 end
 
 % --- măsuri întârziate cu un pas (evită buclele algebrice în modul discret) ---
-for m = {'Udc', 'Ubat', 'Ibat'}
-    bloc(mdl, [m{1} '_z'], L.intarziere, [820 400 + 40 * find(strcmp(m{1}, {'Udc', 'Ubat', 'Ibat'})) 850 ...
-         430 + 40 * find(strcmp(m{1}, {'Udc', 'Ubat', 'Ibat'}))], 'SampleTime', nr(Ts), 'InitialCondition', '0');
-end
-set_param([mdl '/Udc_z'], 'InitialCondition', nr(D.U_dc));
-set_param([mdl '/Ubat_z'], 'InitialCondition', nr(U_bat0));
-c('Udc_m/o1', 'Udc_z/i1');  c('Ubat_m/o1', 'Ubat_z/i1');  c('Ibat_m/o1', 'Ibat_z/i1');
+bloc(mdl, 'Udc_z', L.intarziere, [820 440 850 470], 'SampleTime', nr(Ts), 'InitialCondition', nr(D.U_dc));
+bloc(mdl, 'Ubat_z', L.intarziere, [820 480 850 510], 'SampleTime', nr(Ts), 'InitialCondition', nr(U_bat0));
+c('Udc_m/o1', 'Udc_z/i1');  c('Ubat_m/o1', 'Ubat_z/i1');
 
 % --- regulatorul de tensiune și curentul de referință ---
 bloc(mdl, 'Udc_ref', L.constanta, [880 520 920 540], 'Value', nr(D.U_dc));
