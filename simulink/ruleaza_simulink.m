@@ -12,6 +12,9 @@
 
 aici = fileparts(mfilename('fullpath'));
 addpath(aici);
+% scripturile etapelor 2-4 (necesare și când referințele sunt deja calculate, REFERINTE_CALCULATE = true)
+addpath(fullfile(aici, '..', 'etapa2-calcule', 'matlab'), fullfile(aici, '..', 'etapa3-tema-motor', 'matlab'), ...
+        fullfile(aici, '..', 'etapa4-convertoare', 'matlab'));
 if ~exist(fullfile(aici, 'modele'), 'dir'), mkdir(fullfile(aici, 'modele')); end
 if ~exist(fullfile(aici, 'rezultate'), 'dir'), mkdir(fullfile(aici, 'rezultate')); end
 jurnal = fullfile(aici, 'rezultate', 'jurnal_simulink.txt');
