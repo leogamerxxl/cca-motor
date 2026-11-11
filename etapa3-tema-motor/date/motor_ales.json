@@ -1,0 +1,16 @@
+{
+  "nume": "YASA YM720",
+  "tip": "mașină sincronă cu magneți permanenți, flux axial (răcire cu ulei)",
+  "numar_motoare": 3,
+  "dispunere": "1 față + 2 spate",
+  "P_n_kW": 180,
+  "P_max_kW": 350,
+  "M_n_Nm": 350,
+  "M_max_Nm": 700,
+  "n_max_rpm": 10000,
+  "U_dc_max_V": 800,
+  "U_dc_min_V": 400,
+  "masa_kg": 33,
+  "durata_varf_s": 30,
+  "sursa": "https://yasa.com/yasa-series-motors/"
+}
