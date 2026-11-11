@@ -79,7 +79,7 @@ bloc(mdl, 'W2', L.produs, [1160 470 1190 500], 'Inputs', '**');
 bloc(mdl, 'a2', L.castig, [1210 470 1250 500], 'Gain', nr(Q.a2));
 bloc(mdl, 'SumTL', L.suma, [1280 430 1300 490], 'Inputs', '++-');
 c('w_z/o1', 'SgnW/i1');  c('SgnW/o1', 'a0/i1');  c('w_z/o1', 'W2/i1');  c('w_z/o1', 'W2/i2');  c('W2/o1', 'a2/i1');
-c('a0/o1', 'SumTL/i1');  c('a2/o1', 'SumTL/i2');  c('Tfm/o1', 'SumTL/i3');  c('SumTL/o1', 'Masina/i1');
+c('a0/o1', 'SumTL/i1');  c('a2/o1', 'SumTL/i2');  c('SumTL/o1', 'Masina/i1');   % i3 (frâna mecanică): mai jos
 
 % --- ciclul de viteză și regulatorul de viteză ---
 bloc(mdl, 'Ceas', L.ceas, [1380 40 1410 70]);
@@ -123,6 +123,7 @@ bloc(mdl, 'mTrec', L.constanta, [1740 160 1790 180], 'Value', nr(-T.T_rec_max));
 bloc(mdl, 'Tel', L.minmax, [1800 150 1830 190], 'Function', 'max', 'Inputs', '2');
 bloc(mdl, 'Tfm', L.suma, [1800 200 1820 240], 'Inputs', '+-');
 c('Tref/o1', 'Tel/i1');  c('mTrec/o1', 'Tel/i2');  c('Tref/o1', 'Tfm/i1');  c('Tel/o1', 'Tfm/i2');
+c('Tfm/o1', 'SumTL/i3');                         % cuplul frânei mecanice se adaugă la sarcina mașinii
 % --- curentul de referință și regulatorul de curent ---
 bloc(mdl, 'Tf0', L.castig, [1210 520 1250 550], 'Gain', nr(M.T_f0));
 bloc(mdl, 'Fv', L.castig, [1210 560 1250 590], 'Gain', nr(M.F_v));
