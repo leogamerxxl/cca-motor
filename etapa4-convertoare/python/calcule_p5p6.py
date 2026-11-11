@@ -210,11 +210,12 @@ def tabele(R, nr=None):
         f"D = {ro(tr['D_teoretic'], 4)}; ΔI pe fază = {ro(tr['dI_faza_teoretic'], 1)} A; ΔU_dc ≤ {ro(D['dU'], 0)} V |",
         f"| DC-DC cu comutație – recuperare ({ro(sc['dcdc']['P_franare_rel']*D['P_dc_max']/1e3, 0)} kW) | I_bat = {ro(rec['I_bat_med'], 0)} A, U_bat = {ro(rec['U_bat_med'], 1)} V, D = {ro(rec['D_med'], 4)}, "
         f"U_dc = {ro(rec['U_dc_med'], 2)} V; ΔI pe fază {ro(rec['dI_faza'], 1)} A, ΔI_bat {ro(rec['dI_bat'], 1)} A | D = {ro(rec['D_teoretic'], 4)}; ΔI pe fază = {ro(rec['dI_faza_teoretic'], 1)} A |",
-        f"| DC-DC – schimbările de sarcină (pante de {ro(sc['dcdc']['t_rampa']*1e3, 0)} ms) | U_dc min {ro(Dc['U_dc_min'], 1)} V la intrarea în tracțiune, max {ro(Dc['U_dc_max'], 1)} V la trecerea în recuperare | "
+        f"| DC-DC – schimbările de sarcină (pante de {ro(sc['dcdc']['t_rampa']*1e3, 0)} ms) | U_dc min {ro(Dc['U_dc_min'], 1)} V, max {ro(Dc['U_dc_max'], 1)} V (vârful la trecerea în recuperare) | "
         f"{ro(100*(Dc['U_dc_min']-D['U_dc'])/D['U_dc'], 1)} % / +{ro(100*(Dc['U_dc_max']-D['U_dc'])/D['U_dc'], 1)} % |",
     ])
     Ptr = D["P_dc_max"]
     Pfr = sc["dcdc"]["P_franare_rel"] * Ptr
+    t_peste = float(np.sum(Dc["UDC"] > 1.01 * D["U_dc"]) * (Dc["t"][1] - Dc["t"][0]))
     tb["dcdc_text"] = (
         f"Cele {D['N_faze']} faze defazate cu T_s/{D['N_faze']} își compensează ondulațiile; efectul depinde de factorul de umplere. "
         f"La tracțiune (D ≈ {ro(tr['D_med'], 2)}, aproape de 1/{D['N_faze']}, unde compensarea este aproape completă) ondulația "
@@ -225,7 +226,8 @@ def tabele(R, nr=None):
         f"ondulația de curent a invertoarelor). Puterea sarcinii trece de la 0 la {ro(Ptr/1e3, 0)} kW și apoi la −{ro(Pfr/1e3, 0)} kW "
         f"(o schimbare de {ro((Ptr+Pfr)/1e3, 0)} kW) cu pante de {ro(sc['dcdc']['t_rampa']*1e3, 0)} ms; tensiunea circuitului intermediar "
         f"rămâne între {ro(Dc['U_dc_min'], 1)} V și {ro(Dc['U_dc_max'], 1)} V – vârful depășește cu {ro(100*(Dc['U_dc_max']/D['U_dc']-1), 1)} % "
-        "tensiunea maximă din domeniul de aplicare al motoarelor (800 V), timp de sub 1 ms.")
+        f"tensiunea maximă din domeniul de aplicare al motoarelor (800 V); peste {ro(1.01*D['U_dc'], 0)} V (+1 %) tensiunea stă în total "
+        f"{ro(t_peste*1e3, 2)} ms.")
     if nr:
         tb["comparatie"] = (f"Implementarea Python (python/model_p5p6.py) refăcută independent de MATLAB/Octave: {nr[0]} mărimi comparate, "
                             f"{len(nr[1])} diferențe peste toleranța relativă 10⁻⁶.")

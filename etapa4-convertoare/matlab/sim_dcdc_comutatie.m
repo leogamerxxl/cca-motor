@@ -86,8 +86,9 @@ R.P = P_(1:j);
 R.Kpi = Kpi;  R.Kii = Kii;  R.Kpu = Kpu;  R.Kiu = Kiu;  R.np = np;
 R.tr = indicatori(A(1, :) / cnt(1), mn(1, :), mx(1, :), D, U0, Rb);
 R.rec = indicatori(A(2, :) / cnt(2), mn(2, :), mx(2, :), D, U0, Rb);
-R.U_dc_min = min(R.UDC(R.t >= sc.t_tractiune & R.t < sc.t_franare));
-R.U_dc_max = max(R.UDC(R.t >= sc.t_franare));
+m = R.t >= sc.t_tractiune;                       % de la prima schimbare de sarcină până la sfârșit
+R.U_dc_min = min(R.UDC(m));
+R.U_dc_max = max(R.UDC(m));
 end
 
 function X = indicatori(med, mn, mx, D, U0, Rb)

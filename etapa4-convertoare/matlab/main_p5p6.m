@@ -78,7 +78,7 @@ for nume = {'tr', 'rec'}
     fprintf('     ondulații: faza %.1f A (formula %.1f A), baterie %.1f A, U_dc %.2f V\n', X.dI_faza, ...
             X.dI_faza_teoretic, X.dI_bat, X.dU_dc);
 end
-fprintf('treaptă de sarcină: U_dc min = %.1f V (tracțiune), U_dc max = %.1f V (recuperare)\n', Dc.U_dc_min, Dc.U_dc_max);
+fprintf('schimbările de sarcină (pante): U_dc min = %.1f V, U_dc max = %.1f V\n', Dc.U_dc_min, Dc.U_dc_max);
 fprintf('(durata simulărilor: %.1f s)\n', durata);
 
 if grafice

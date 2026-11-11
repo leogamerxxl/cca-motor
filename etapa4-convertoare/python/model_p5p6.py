@@ -336,9 +336,9 @@ def sim_dcdc_comutatie(D, sc):
 
     R["tr"] = indicatori(0)
     R["rec"] = indicatori(1)
-    m1 = (R["t"] >= sc["t_tractiune"]) & (R["t"] < sc["t_franare"])
+    m1 = R["t"] >= sc["t_tractiune"]                 # de la prima schimbare de sarcină până la sfârșit
     R["U_dc_min"] = float(R["UDC"][m1].min())
-    R["U_dc_max"] = float(R["UDC"][R["t"] >= sc["t_franare"]].max())
+    R["U_dc_max"] = float(R["UDC"][m1].max())
     return R
 
 

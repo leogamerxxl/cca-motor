@@ -9,7 +9,7 @@ function rez = model_sps_incarcator(P, Rm)
 if nargin < 1 || isempty(P), P = parametri_simulink(); end
 if nargin < 2 || isempty(Rm), Rm = sim_incarcare_comutatie(P.C, P.S.cv.simulare.incarcare); end
 L = biblioteci();  C = P.C;  sc = P.S.cv.simulare.incarcare;
-Ts = 2.5e-7;
+Ts = sc.dt;                                        % același pas ca în sim_incarcare_comutatie.m
 Cs = C.C_eq / sc.k_timp;
 OCV0 = C.U_CV - C.R_bat * C.I_CC - C.I_CC * sc.t_CC_s / Cs;
 wc = 2 * pi * sc.fc_U_Hz;  Kp = sc.Kp_R / C.R_bat;  Ki = wc / abs(C.R_bat + 1 / (1i * wc * Cs));

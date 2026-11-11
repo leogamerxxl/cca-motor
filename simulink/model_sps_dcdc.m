@@ -1,7 +1,8 @@
 function rez = model_sps_dcdc(P, Rm, inversat)
 %MODEL_SPS_DCDC P5-P6: convertorul DC-DC bidirecțional (4 faze intercalate) în Specialized Power Systems,
 %   cu sarcina celor 3 invertoare modelată ca sursă de curent comandată i = P(t)/u_dc:
-%   P = 0 -> P_dc_max (tracțiune, ridicător) -> -P_franare (frânare recuperativă, coborâtor).
+%   P = 0 -> P_dc_max (tracțiune, ridicător) -> -P_franare (frânare recuperativă, coborâtor), cu pante
+%   de durată t_rampa, ca în sim_dcdc_comutatie.m (tabel 1-D cu interpolare liniară în timp).
 %   powergui discret (Ts = pasul din sim_dcdc_comutatie.m), rezolvitor cu pas fix ode4.
 %   Rezultatele se compară cu simularea MATLAB cu comutație (sim_dcdc_comutatie.m) – Rm, opțional.
 %   inversat – folosit intern: dacă sursa de curent a fost legată cu polaritatea inversă, modelul se
@@ -15,16 +16,16 @@ c = @(a, b) leaga(mdl, a, b);
 bloc(mdl, 'powergui', L.powergui, [40 20 120 60], 'SimulationMode', 'Discrete', 'SampleTime', nr(Ts));
 adauga_dcdc(mdl, P, sc.U_bat_V, Ts);
 
-% --- sarcina: P(t) = treaptă de tracțiune + treaptă spre recuperare; i = P/u_dc ---
-bloc(mdl, 'P_tr', L.treapta, [600 520 630 550], 'Time', nr(sc.t_tractiune), 'Before', '0', 'After', nr(D.P_dc_max));
-bloc(mdl, 'P_fr', L.treapta, [600 580 630 610], 'Time', nr(sc.t_franare), 'Before', '0', ...
-     'After', nr(-(1 + sc.P_franare_rel) * D.P_dc_max));
-bloc(mdl, 'SumPs', L.suma, [660 540 680 600], 'Inputs', '++');
+% --- sarcina: P(t) cu pante de t_rampa (0 -> tracțiune -> recuperare); i = P/u_dc ---
+tP = [0, sc.t_tractiune, sc.t_tractiune + sc.t_rampa, sc.t_franare, sc.t_franare + sc.t_rampa, sc.t_end];
+vP = [0, 0, D.P_dc_max, D.P_dc_max, -sc.P_franare_rel * D.P_dc_max, -sc.P_franare_rel * D.P_dc_max];
+bloc(mdl, 'Ceas', L.ceas, [560 540 590 570]);
+bloc(mdl, 'SumPs', L.tabel, [620 540 680 600], 'Table', nr(vP), 'BreakpointsForDimension1', nr(tP));
 bloc(mdl, 'DivIs', L.produs, [710 550 740 590], 'Inputs', '*/');
 bloc(mdl, 'Isarc', L.sursa_I, [820 230 850 270], 'Initialize', 'off', ...
      'Measurements', 'None');
 bloc(mdl, 'Isarc_m', L.masura_I, [780 180 810 210]);
-c('P_tr/o1', 'SumPs/i1');  c('P_fr/o1', 'SumPs/i2');  c('SumPs/o1', 'DivIs/i1');  c('Udc_z/o1', 'DivIs/i2');
+c('Ceas/o1', 'SumPs/i1');  c('SumPs/o1', 'DivIs/i1');  c('Udc_z/o1', 'DivIs/i2');
 c('DivIs/o1', 'Isarc/i1');  c('SumPs/o1', 'Pff/i1');
 c('Cdc/l1', 'Isarc_m/l1');
 if ~inversat
@@ -71,8 +72,8 @@ ind = @(m) struct('I_bat_med', mean(Ib(m)), 'U_dc_med', mean(Udc(m)), 'D_med', m
                   'dI_faza', max(IL(m, 1)) - min(IL(m, 1)), 'dI_bat', max(Ib(m)) - min(Ib(m)), ...
                   'dU_dc', max(Udc(m)) - min(Udc(m)));
 rez.tr = ind(m1);  rez.rec = ind(m2);
-rez.U_dc_min = min(Udc(t >= sc.t_tractiune & t < sc.t_franare));
-rez.U_dc_max = max(Udc(t >= sc.t_franare));
+rez.U_dc_min = min(Udc(t >= sc.t_tractiune));   % ca în sim_dcdc_comutatie.m
+rez.U_dc_max = max(Udc(t >= sc.t_tractiune));
 rez.ref.tr = Rm.tr;  rez.ref.rec = Rm.rec;  rez.ref.U_dc_min = Rm.U_dc_min;  rez.ref.U_dc_max = Rm.U_dc_max;
 fprintf('DC-DC (SPS): tracțiune I_bat %.0f A (MATLAB %.0f), D %.4f (%.4f), ΔI faza %.1f A (%.1f), ΔU_dc %.2f V (%.2f)\n', ...
         rez.tr.I_bat_med, Rm.tr.I_bat_med, rez.tr.D_med, Rm.tr.D_med, rez.tr.dI_faza, Rm.tr.dI_faza, ...

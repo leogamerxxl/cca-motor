@@ -116,7 +116,7 @@ față la accelerare este cu ≈ 10 % mai mare.
 | „Convertor DC-DC step-down” + regulator U_conv | DC-DC **bidirecțional** cu 4 faze intercalate: ridicător la tracțiune (U_conv = 800 V), coborâtor la frânare (în schema de curs: coborâtor) | etapa 4 (P5-P6) |
 | Chopper / invertor + regulator I_mot | 3 invertoare SiC; la echivalentul MCC: chopper în punte H (4 cadrane), PI de curent | § 9, etapa 4, Simulink |
 | Mașină electrică | 3 × YASA YM720 (model MCC echivalent) | § 4–9 |
-| Reductor | 1/i_rd = 4,15, η_rd = 0,99 | § 1 |
+| Reductor | 1/i_rd = 4,0, η_rd = 0,99 | § 1 |
 | Roți + regulator de viteză + ciclu de viteză | ciclul P3 (0 → 50 → 0 km/h), PI de viteză | § 10, Simulink |
 | Convertor frânare recuperativă | același DC-DC în regim coborâtor (nu un convertor separat) | etapa 4 |
 | Convertor AC-DC încărcător + regulator I_bat | PFC trifazat + coborâtor cu histerezis, încărcare CC-CV | etapa 4 |

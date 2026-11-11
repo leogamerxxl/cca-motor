@@ -45,7 +45,7 @@ Etajul PFC al încărcătorului nu este simulat: este reprezentat printr-o surs�
 
 **Verificare:**
 <!-- AUTO:comparatie -->
-Implementarea Python (python/model_p5p6.py) refăcută independent de MATLAB/Octave: 125 mărimi comparate, 0 diferențe peste toleranța relativă 10⁻⁶.
+Implementarea Python (python/model_p5p6.py) refăcută independent de MATLAB/Octave: 127 mărimi comparate, 0 diferențe peste toleranța relativă 10⁻⁶.
 <!-- /AUTO:comparatie -->
 Simulările cu comutație sunt deterministe (pas fix, purtătoarea PWM calculată din numărul pasului), de aceea Matlab și
 Python dau aceleași valori și pentru ele.
@@ -63,19 +63,19 @@ Relațiile din curs / notele de aplicație TI (SLVA372D, SLVA477):
 <!-- AUTO:dcdc -->
 | Mărime | Valoare | Relația / observații |
 |---|---|---|
-| Punctul de dimensionare | 3 × 525,0 Nm la 3 145 rot/min | P_max (P2) la 100 km/h, η motor = 94,42 % (harta C3) |
-| P în circuitul intermediar | 557,8 kW | 3·P1 / η_invertor (η = 0,985) |
-| P cerută bateriei | 569,2 kW | / η_DC-DC (ipoteză 0,980) |
+| Punctul de dimensionare | 3 × 544,7 Nm la 3 032 rot/min | P_max (P2) la 100 km/h, η motor = 94,15 % (harta C3) |
+| P în circuitul intermediar | 559,4 kW | 3·P1 / η_invertor (η = 0,985) |
+| P cerută bateriei | 570,8 kW | / η_DC-DC (ipoteză 0,980) |
 | U_dc / U_bat | 800 V / 475…798 V (nominal 684 V) | – |
-| D ridicător | 0,0025 … 0,4062 (nominal 0,145) | D = 1 − U_bat/U_dc; peste 95 % din U_dc: trecere directă |
+| D ridicător | 0,05 … 0,4062 (nominal 0,145) | D = 1 − U_bat/U_dc; pentru U_bat > 760 V: trecere directă (D = 0) |
 | D coborâtor (recuperare) | 0,594 … 0,9975 | D_c = U_bat/U_dc |
-| I_bat max (U_bat = U_min) | 1 198 A | 4 faze × 299,6 A |
-| Ondulația pe fază ΔI | 89,9 A (30 %) | TI SLVA372D: 20–40 % |
-| Bobina pe fază L | **107,4 µH** | L = U_bat·D/(ΔI·f_s), maxim la U_bat = 475 V |
-| Curentul de vârf pe fază | 344,5 A | I_faza + ΔI/2 |
-| Condensatorul circuitului intermediar | **≥ 1 770 µF** (9 × 200 µF) | C = I_dc·D_max/(ΔU·f_s), ΔU = 8 V (1 %), o fază echivalentă (acoperitor) |
+| I_bat max (U_bat = U_min) | 1 202 A | 4 faze × 300,4 A |
+| Ondulația curentului pe fază ΔI | 90,1 A (30 %) | TI SLVA372D: 20–40 % |
+| Bobina pe fază L | **107,1 µH** | L = U_bat·D/(ΔI·f_s), maxim la U_bat = 475 V |
+| Curentul de vârf pe fază | 345,5 A | I_faza + ΔI/2 |
+| Condensatorul circuitului intermediar | **≥ 1 775 µF** (9 × 200 µF) | C = I_dc·D_max/(ΔU·f_s), ΔU = 8 V (1 %), o fază echivalentă (acoperitor) |
 | Modulul | Wolfspeed CAB760M12HM3 (semipunte SiC 1200 V) | U_DS = 1200 V ≥ U_dc/0,8: DA; I_vârf ≤ 0,8·765 A: DA |
-| Pierderi în tranzistoare la P_max | 2,59 kW (η = 99,54 %) | conducție 212 W + comutație 436 W pe fază |
+| Pierderi în tranzistoare la P_max | 2,60 kW (η = 99,54 %) | conducție 213 W + comutație 437 W pe fază |
 <!-- /AUTO:dcdc -->
 
 Componentele: modulul SiC **Wolfspeed CAB760M12HM3** (1200 V, 765 A la T_C = 90 °C, R_DS(on) = 2,34 mΩ la 175 °C,
@@ -95,6 +95,7 @@ invertorului și DC-DC-ului; în P3 și în confirmările etapei 3 s-a folosit r
 ![Intercalarea fazelor](figuri/p5_dcdc_intercalare.png)
 
 <!-- AUTO:dcdc_text -->
+Cele 4 faze defazate cu T_s/4 își compensează ondulațiile; efectul depinde de factorul de umplere. La tracțiune (D ≈ 0,23, aproape de 1/4, unde compensarea este aproape completă) ondulația curentului bateriei este de 7,6 ori mai mică decât a unei faze (9,0 A față de 68,3 A); la recuperare (D ≈ 0,11) reducerea este mai mică (24,1 A față de 36,8 A). Ondulația tensiunii circuitului intermediar (0,18 V, respectiv 0,23 V) este mult sub cele 8 V ale calculului acoperitor cu o singură fază (în simulare sarcina este ideală, fără ondulația de curent a invertoarelor). Puterea sarcinii trece de la 0 la 559 kW și apoi la −280 kW (o schimbare de 839 kW) cu pante de 2 ms; tensiunea circuitului intermediar rămâne între 793,9 V și 811,9 V – vârful depășește cu 1,5 % tensiunea maximă din domeniul de aplicare al motoarelor (800 V); peste 808 V (+1 %) tensiunea stă în total 0,93 ms.
 <!-- /AUTO:dcdc_text -->
 
 ## 2. Chopperul în 4 cadrane (invertorul echivalent)
@@ -105,8 +106,8 @@ invertorului și DC-DC-ului; în P3 și în confirmările etapei 3 s-a folosit r
 | f_pwm (modulație unipolară, frecvența ondulației 2·f_pwm) | 10 kHz |
 | L_a (= τ_a·R_a) | 0,546 mH |
 | Ondulația maximă ΔI = U_dc/(8·L_a·f_pwm) (m = 0,5) | 18,3 A (3,9 % din I_max) → ΔT = 27,9 Nm |
-| Nominal / cuplu maxim / P_max la 100 km/h: m = U/U_dc | 1,000 / 0,992 / 0,657 |
-| ΔI în aceste puncte | 0,0 / 0,6 / 16,5 A |
+| Nominal / cuplu maxim / P_max la 100 km/h: m = U/U_dc | 1,000 / 0,992 / 0,636 |
+| ΔI în aceste puncte | 0,0 / 0,6 / 17,0 A |
 | Curentul de vârf al tranzistoarelor | 473,1 A |
 <!-- /AUTO:chopper -->
 
@@ -119,12 +120,12 @@ Inductivitatea echivalentă L_a = τ_a·R_a (etapa 3) face ca ondulația curentu
 | Mărime | Valoare | Observații |
 |---|---|---|
 | Rețea / putere AC | 3 × 400 V, 22 kW | încărcător de bord (mod 3, IEC 61851) |
-| U_dc după PFC | 880 V | > √2·U_AC = 566 V și > U_CV: DA |
+| U_PFC (tensiunea după PFC) | 880 V | > √2·U_AC = 566 V și > U_CV: DA |
 | P în baterie | 21,34 kW | η_PFC·η_coborâtor = 0,970 |
 | Faza CC | 26,75 A = 0,173C (0,863 A/celulă) | I_CC = P_bat/U_CV; fișa celulei: standard 1C, maxim 5C |
-| Faza CV | 798 V (4,2 V/celulă) | oprire la 1,55 A (50 mA/celulă, sursă S) |
-| D coborâtor | 0,540 … 0,907 | D = U_bat/U_dc |
-| Histerezis / bobină | h = 8,02 A → L = 605 µH | f = U_dc·D(1−D)/(h·L) ≤ 45 kHz |
+| Faza CV | 798 V (4,2 V/celulă) | oprire la 1,55 A (50 mA/celulă, sursă secundară) |
+| D coborâtor | 0,540 … 0,907 | D = U_bat/U_PFC |
+| Histerezis / bobină | h = 8,02 A → L = 605 µH | f = U_PFC·D(1−D)/(h·L) ≤ 45 kHz |
 | Baterie (model) | R = 78,5 mΩ, OCV 570…798 V, C_eq = 2 447 F, τ_CV = 192 s | OCV liniar, medie = U_nom |
 | Durata (analitic) de la SOC = 10 % | CC 5,16 h + CV 9,1 min = 5,31 h | – |
 <!-- /AUTO:incarcator -->
@@ -147,11 +148,11 @@ Inductivitatea echivalentă L_a = τ_a·R_a (etapa 3) face ca ondulația curentu
 <!-- AUTO:simulari -->
 | Simulare | Rezultat | Verificare |
 |---|---|---|
-| Încărcare completă, model mediu (pas 1 s) | CC 5,16 h, total 5,31 h, SOC final 99,95 %; din rețea 100,22 kWh, în baterie 97,24 kWh, stocat 96,94 kWh | analitic: 5,16 h / 5,31 h |
-| Încărcător cu comutație (timp scalat 1:10000) | trecere CC → CV la 20,63 ms; I la t_CC + τ = 9,93 A; f în CC = 15,2 kHz; oprire (I < 1,55 A) la 74,9 ms | model mediu: 20 ms; 9,84 A; 15,3 kHz; oprire la 74,7 ms |
-| DC-DC cu comutație – tracțiune (558 kW) | I_bat = 909 A, U_bat = 612,6 V, D = 0,2344, U_dc = 800,04 V; ΔI faza 68,1 A, ΔI_bat 10,4 A, ΔU_dc 0,24 V | D = 0,2342; ΔI faza = 66,8 A; ΔU_dc ≤ 8 V |
-| DC-DC cu comutație – recuperare (279 kW) | I_bat = -391 A, U_bat = 714,7 V, D = 0,1071, U_dc = 799,99 V; ΔI faza 36,8 A | D = 0,1067; ΔI faza = 35,5 A |
-| DC-DC – treptele de sarcină | U_dc min 766,5 V la treapta de tracțiune, max 863,7 V la trecerea în recuperare | ±8,0 % |
+| Încărcare completă, model mediu (pas 1 s) | CC 5,16 h, total 5,31 h, SOC final 99,95 %; din rețea 100,22 kWh, în baterie 97,23 kWh, stocat 96,94 kWh | analitic: 5,16 h / 5,31 h |
+| Încărcător cu comutație (timp scalat 1:10000) | trecere CC → CV la 20,63 ms; I la t_CC + τ = 9,93 A; f în CC = 15,2 kHz; oprire (I < 1,55 A) la 74,9 ms | model mediu: 20 ms (impus prin OCV inițial); 9,84 A; 15,3 kHz; oprire la 74,7 ms |
+| DC-DC cu comutație – tracțiune (559 kW) | I_bat = 913 A, U_bat = 612,4 V, D = 0,2344, U_dc = 800,00 V; ΔI pe fază 68,3 A, ΔI_bat 9,0 A, ΔU_dc 0,18 V | D = 0,2345; ΔI pe fază = 67,1 A; ΔU_dc ≤ 8 V |
+| DC-DC cu comutație – recuperare (280 kW) | I_bat = −392 A, U_bat = 714,7 V, D = 0,1073, U_dc = 800,07 V; ΔI pe fază 36,8 A, ΔI_bat 24,1 A | D = 0,1066; ΔI pe fază = 35,6 A |
+| DC-DC – schimbările de sarcină (pante de 2 ms) | U_dc min 793,9 V la intrarea în tracțiune, max 811,9 V la trecerea în recuperare | −0,8 % / +1,5 % |
 <!-- /AUTO:simulari -->
 
 ![Încărcarea CC-CV](figuri/p5_incarcare_cccv.png)
