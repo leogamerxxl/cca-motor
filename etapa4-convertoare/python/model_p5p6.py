@@ -130,6 +130,7 @@ def sim_incarcare_medie(C, dt):
     tk = 0.0
     t_CC = math.nan
     k = 0
+    E_bat = 0.0
     while k < nmax:
         Ik = min(C["I_CC"], (C["U_CV"] - OCV) / C["R_bat"])
         if Ik < C["I_taiere"]:
@@ -142,9 +143,12 @@ def sim_incarcare_medie(C, dt):
         if Ik < C["I_CC"] and math.isnan(t_CC):
             t_CC = tk
         if Ik >= C["I_CC"]:
-            OCV = OCV + C["I_CC"] * dt / C["C_eq"]
+            OCV_nou = OCV + C["I_CC"] * dt / C["C_eq"]
+            E_bat = E_bat + C["I_CC"] * ((OCV + OCV_nou) / 2 + C["R_bat"] * C["I_CC"]) * dt
         else:
-            OCV = C["U_CV"] - (C["U_CV"] - OCV) * math.exp(-dt / C["tau_CV"])
+            OCV_nou = C["U_CV"] - (C["U_CV"] - OCV) * math.exp(-dt / C["tau_CV"])
+            E_bat = E_bat + C["U_CV"] * C["C_eq"] * (OCV_nou - OCV)
+        OCV = OCV_nou
         tk = tk + dt
     R = dict(t=np.array(t), I=np.array(I), U=np.array(U), SOC=np.array(SOC))
     R["P_bat"] = R["U"] * R["I"]
@@ -152,8 +156,8 @@ def sim_incarcare_medie(C, dt):
     R["t_CC"] = t_CC
     R["t_total"] = t[-1] + dt
     R["SOC_final"] = (OCV - C["U_0"]) / (C["U_CV"] - C["U_0"])
-    R["E_bat"] = float(np.sum(R["P_bat"])) * dt
-    R["E_AC"] = float(np.sum(R["P_AC"])) * dt
+    R["E_bat"] = E_bat
+    R["E_AC"] = E_bat / ic_P
     R["E_stocata"] = C["C_eq"] * (OCV ** 2 - OCV0 ** 2) / 2
     R["E_pierderi_bat"] = R["E_bat"] - R["E_stocata"]
     return R
