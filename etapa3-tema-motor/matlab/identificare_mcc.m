@@ -66,9 +66,9 @@ M.M_p_Un = M.k * M.I_p_Un;                    % cuplul de pornire la U_n
 M.U_p    = M.R_a * M.I_max + M.dU_p;          % tensiunea de pornire pentru I_ap = I_max
 
 % --- parametri dinamici ---
-M.L_a     = ip.L_a_H;
+M.tau_a   = ip.tau_a_s;                       % constanta de timp electrică L/R a mașinii reale (YASA)
+M.L_a     = M.tau_a * M.R_a;                  % se păstrează tau la trecerea PMSM -> MCC echivalent
 M.J_rotor = ip.J_rotor_kgm2;
-M.tau_a   = M.L_a / M.R_a;                    % constanta de timp electrică
 M.masa    = mot.masa_kg;
 M.c       = ip.c_J_kgK;
 end

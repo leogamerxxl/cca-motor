@@ -16,21 +16,24 @@ fprintf('T_sarcina = a0 + a2*W^2: a0 = %.3f Nm, a2 = %.4e Nm*s2/rad2\n', P.a0, P
 fprintf('Constanta de timp electrică tau_a = %.3g s, electromecanică tau_m = J*R_a/k^2 = %.3g s\n', ...
         M.tau_a, P.J * M.R_a / M.k^2);
 
+sim_p = S.ip.simulare;
 tic;
 Z = simulari(S, M, T);
 C = simulare_ansamblu(S, M, T);
 durata = toc;
 
-fprintf('\n=== A: pornire în gol la U_p = %.2f V ===\n', M.U_p);
-fprintf('I de vârf = %.1f A (I_max = %.1f A), viteza finală = %.1f rad/s (teoretic %.1f rad/s)\n', ...
-        Z.A.I_varf, M.I_max, Z.A.W_final, Z.A.W_gol_teoretic);
+fprintf('\n=== A: pornire în gol la U_p = %.2f V, treaptă de sarcină %.0f Nm la %.0f ms ===\n', M.U_p, ...
+        sim_p.A_M_treapta, sim_p.A_t_treapta * 1e3);
+fprintf('I de vârf = %.1f A (I_max = %.1f A); în gol W = %.3f rad/s (teoretic %.3f rad/s)\n', ...
+        Z.A.I_varf, M.I_max, Z.A.W_gol, Z.A.W_gol_teoretic);
+fprintf('cu sarcină: W = %.3f rad/s, I = %.1f A (teoretic %.3f rad/s, %.1f A)\n', Z.A.W_final, Z.A.I_final, ...
+        Z.A.W_sarcina_teoretic, Z.A.I_sarcina_teoretic);
 
 fprintf('\n=== B: accelerare cu regulator de curent (f_c = %d Hz) și slăbire de câmp ===\n', S.ip.simulare.B_fc_Hz);
 fprintf('cuplul cerut pe motor = min(aderență %.1f Nm, M_max %.0f Nm, P_max/W)\n', Z.B.T_ad, M.M_max);
 fprintf('0–100 km/h: %.2f s (P2: %.2f s), 0–200 km/h: %.2f s, v_max %.1f km/h atinsă: %s în %.1f s; I de vârf %.1f A\n', ...
         Z.B.t_100, S.R2.ta, Z.B.t_200, S.R2.vmax*3.6, mat2str(Z.B.atins_vmax), Z.B.t_vmax, Z.B.I_varf);
 
-sim_p = S.ip.simulare;
 fprintf('\n=== D: rampă de tensiune %g V/s până la U_n, sarcina vehiculului (scenariul Simulink) ===\n', sim_p.D_panta);
 fprintf('I de vârf = %.1f A, turația finală = %.0f rot/min (n_max = %d) după %g s\n', ...
         Z.D.I_varf, Z.D.W_final * rpm, M.n_max, sim_p.D_t_end);

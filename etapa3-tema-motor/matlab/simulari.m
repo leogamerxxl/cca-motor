@@ -1,6 +1,7 @@
 function Z = simulari(S, M, T)
 %SIMULARI Scenariile de simulare a mașinii (curs C3, exercițiul 2), pentru UN motor YM720.
-%   A – pornire în gol la tensiunea U_p care limitează curentul de pornire la I_max (C3, IV)
+%   A – pornire în gol la tensiunea U_p care limitează curentul de pornire la I_max (C3, IV), apoi
+%       treaptă de cuplu de sarcină (ca în exemplul de curs MCC_CCA.slx)
 %   B – accelerarea vehiculului cu regulator PI de curent și slăbire de câmp; cuplul cerut este
 %       limitat de aderență (ca în P2) și de puterea maximă a motorului; se oprește la v_max
 %   D – tensiune în rampă (fără regulator) cu sarcina vehiculului – scenariul refăcut în Simulink;
@@ -13,10 +14,16 @@ ip = S.ip;  sim = ip.simulare;  r = S.C2.r;  N = T.N;  k_rd = T.k_rd;
 % --- A: pornire în gol la U_p ---
 P = parametri_model(S, M, T, 'gol');
 P.mod = 'tensiune';  P.U_fun = @(t) M.U_p;
+P.M_treapta = sim.A_M_treapta;  P.t_treapta = sim.A_t_treapta;     % treaptă de sarcină, ca în exemplul de curs
 [t, X, Y] = rk4(P, sim.A_t_end, sim.A_dt, [0; 0; 0; 0], sim.A_salvare);
+k0 = find(t < sim.A_t_treapta, 1, 'last');                        % ultimul punct înainte de treaptă
 Z.A = struct('t', t, 'I', X(:, 1), 'W', X(:, 2), 'U', Y(:, 1), 'T_ax', Y(:, 4), ...
-             'I_varf', max(X(:, 1)), 'W_final', X(end, 2), ...
-             'W_gol_teoretic', (M.U_p - M.dU_p - M.R_a * M.T_f0 / M.k) / (M.k + M.R_a * M.F_v / M.k));
+             'I_varf', max(X(:, 1)), 'W_gol', X(k0, 2), 'W_final', X(end, 2), 'I_final', X(end, 1), ...
+             'W_gol_teoretic', (M.U_p - M.dU_p - M.R_a * M.T_f0 / M.k) / (M.k + M.R_a * M.F_v / M.k), ...
+             'W_sarcina_teoretic', (M.U_p - M.dU_p - M.R_a * (sim.A_M_treapta + M.T_f0) / M.k) / ...
+                                   (M.k + M.R_a * M.F_v / M.k), ...
+             'I_sarcina_teoretic', 0);
+Z.A.I_sarcina_teoretic = (sim.A_M_treapta + M.T_f0 + M.F_v * Z.A.W_sarcina_teoretic) / M.k;
 
 % --- B: accelerare cu regulator de curent ---
 P = parametri_model(S, M, T, 'vehicul');

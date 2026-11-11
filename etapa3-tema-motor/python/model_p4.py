@@ -88,9 +88,9 @@ def identificare_mcc(mot, ip):
     M["I_p_Un"] = (M["U_n"] - M["dU_p"]) / M["R_a"]
     M["M_p_Un"] = M["k"] * M["I_p_Un"]
     M["U_p"] = M["R_a"] * M["I_max"] + M["dU_p"]
-    M["L_a"] = ip["L_a_H"]
+    M["tau_a"] = ip["tau_a_s"]
+    M["L_a"] = M["tau_a"] * M["R_a"]
     M["J_rotor"] = ip["J_rotor_kgm2"]
-    M["tau_a"] = M["L_a"] / M["R_a"]
     M["masa"] = mot["masa_kg"]
     M["c"] = ip["c_J_kgK"]
     return M
@@ -192,7 +192,7 @@ def parametri_model(S, M, T, scenariu):
     C2, V = S["C2"], S["V"]
     N, k_rd, r = T["N"], T["k_rd"], C2["r"]
     P = dict(R=M["R_a"], L=M["L_a"], k=M["k"], dUp=M["dU_p"], Tf0=M["T_f0"], Fv=M["F_v"], W_b=M["W_b"],
-             U_n=M["U_n"], U_min=0.0)
+             U_n=M["U_n"], U_min=0.0, M_treapta=0.0, t_treapta=math.inf)
     if scenariu == "gol":
         P.update(J=M["J_rotor"], a0=0.0, a2=0.0)
     elif scenariu == "vehicul":
@@ -223,8 +223,9 @@ def derivata_mcc(t, x, P):
             ew = P["Wref_fun"](t) - W
             Tu = P["Kp_w"] * ew + P["Ki_w"] * zw
             Tl = P["Tlim_fun"](W)
-            Tref = min(max(Tu, -Tl), Tl)
-            if Tu == Tref or (Tu > Tl and ew < 0) or (Tu < -Tl and ew > 0):
+            Tl_fr = Tl * (W > 0)
+            Tref = min(max(Tu, -Tl_fr), Tl)
+            if Tu == Tref or (Tu > Tl and ew < 0) or (Tu < -Tl_fr and ew > 0):
                 dzw = ew
             Iref = (Tref + P["Tf0"] * sgn(W) + P["Fv"] * W) / (P["k"] * phi)
         e = Iref - I
@@ -236,7 +237,7 @@ def derivata_mcc(t, x, P):
         raise ValueError(mod)
     T_E = P["k"] * phi * I
     T_ax = T_E - P["Tf0"] * sgn(W) - P["Fv"] * W
-    T_s = P["a0"] * sgn(W) + P["a2"] * W ** 2
+    T_s = P["a0"] * sgn(W) + P["a2"] * W ** 2 + P["M_treapta"] * (t >= P["t_treapta"])
     dI = (U - P["R"] * I - P["dUp"] * sgn(I) - P["k"] * phi * W) / P["L"]
     dW = (T_ax - T_s) / P["J"]
     if W <= 0 and dW < 0:
@@ -288,11 +289,17 @@ def simulari(S, M, T):
     P = parametri_model(S, M, T, "gol")
     P["mod"] = "tensiune"
     P["U_fun"] = lambda t: M["U_p"]
+    P["M_treapta"], P["t_treapta"] = sim["A_M_treapta"], sim["A_t_treapta"]
     t, X, Y = rk4(P, sim["A_t_end"], sim["A_dt"], [0, 0, 0, 0], sim["A_salvare"])
+    k0 = int(np.nonzero(t < sim["A_t_treapta"])[0][-1])
+    Ws = ((M["U_p"] - M["dU_p"] - M["R_a"] * (sim["A_M_treapta"] + M["T_f0"]) / M["k"])
+          / (M["k"] + M["R_a"] * M["F_v"] / M["k"]))
     Z["A"] = dict(t=t, I=X[:, 0], W=X[:, 1], U=Y[:, 0], T_ax=Y[:, 3], I_varf=float(X[:, 0].max()),
-                  W_final=float(X[-1, 1]),
+                  W_gol=float(X[k0, 1]), W_final=float(X[-1, 1]), I_final=float(X[-1, 0]),
                   W_gol_teoretic=(M["U_p"] - M["dU_p"] - M["R_a"] * M["T_f0"] / M["k"])
-                  / (M["k"] + M["R_a"] * M["F_v"] / M["k"]))
+                  / (M["k"] + M["R_a"] * M["F_v"] / M["k"]),
+                  W_sarcina_teoretic=Ws,
+                  I_sarcina_teoretic=(sim["A_M_treapta"] + M["T_f0"] + M["F_v"] * Ws) / M["k"])
     P = parametri_model(S, M, T, "vehicul")
     P["mod"] = "curent"
     wc = 2 * math.pi * sim["B_fc_Hz"]

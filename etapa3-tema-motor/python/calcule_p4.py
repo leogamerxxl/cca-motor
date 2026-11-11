@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib
+import matplotlib.ticker
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -82,7 +83,8 @@ def iesire(R):
              caracteristici=dict(n0_Un=float(R["K"]["n_U"][0, 0]), n_Mmax_Un=float(R["K"]["n_U"][0, -1])),
              incalzire=R["H"])
     o["sim"] = dict(
-        A={k: Z["A"][k] for k in ("I_varf", "W_final", "W_gol_teoretic")} | {"esantioane": esant(Z["A"], [0.002, 0.01, 0.03])},
+        A={k: Z["A"][k] for k in ("I_varf", "W_gol", "W_final", "I_final", "W_gol_teoretic", "W_sarcina_teoretic",
+                                  "I_sarcina_teoretic")} | {"esantioane": esant(Z["A"], [0.002, 0.01, 0.03])},
         B={k: Z["B"][k] for k in ("t_100", "t_200", "t_vmax", "atins_vmax", "I_varf", "T_ad")}
         | {"esantioane": esant(Z["B"], [1, 3, 10])},
         D={k: Z["D"][k] for k in ("I_varf", "W_final")} | {"esantioane": esant(Z["D"], [2, 5, 8])},
@@ -171,7 +173,8 @@ def fig_pierderi(R, d):
     ax.set(xlabel="pierderi pe motor [kW]", xlim=(0, st.max() * 1.45),
            title="Pierderile în punctele caracteristice (diagrama de puteri, C3)")
     ax.legend(fontsize=7.5, loc="lower right")
-    grila(ax)
+    ax.grid(alpha=0.25, lw=0.6, axis="x")
+    ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, _: f"{x:g}".replace(".", ",")))
     fig.tight_layout()
     fig.savefig(d / "c3_pierderi_puncte.png", dpi=140)
     plt.close(fig)
@@ -221,7 +224,8 @@ def fig_simulari(R, d):
     A = Z["A"]
     panouri([("I [A]", [(A["t"] * 1e3, A["I"], "I", CUL[0], "-")]),
              ("n [rot/min]", [(A["t"] * 1e3, A["W"] * RPM, "n", CUL[0], "-")])],
-            f"A – pornire în gol la U_p = {ro(M['U_p'], 1)} V (vârf I = {ro(A['I_varf'], 0)} A)", "sim_A_pornire_gol.png",
+            f"A – pornire în gol la U_p = {ro(M['U_p'], 1)} V, apoi treaptă de sarcină (vârf I = {ro(A['I_varf'], 0)} A)",
+            "sim_A_pornire_gol.png",
             d, xlabel="t [ms]")
     B = Z["B"]
     panouri([("v [km/h]", [(B["t"], B["v"] * 3.6, "v", CUL[0], "-")]),
@@ -410,8 +414,10 @@ def tabele(R, nr_comp=None):
     tb["simulari"] = "\n".join([
         "| Scenariu | Rezultat |",
         "|---|---|",
-        f"| A – pornire în gol la U_p = {ro(M['U_p'], 2)} V | I de vârf {ro(A['I_varf'], 1)} A (I_max = {ro(M['I_max'], 1)} A); "
-        f"Ω final {ro(A['W_final'], 3)} rad/s = teoretic {ro(A['W_gol_teoretic'], 3)} rad/s |",
+        f"| A – pornire în gol la U_p = {ro(M['U_p'], 2)} V, apoi treaptă de sarcină {ro(sim['A_M_treapta'], 0)} Nm la "
+        f"{ro(sim['A_t_treapta']*1e3, 0)} ms | I de vârf {ro(A['I_varf'], 1)} A (I_max = {ro(M['I_max'], 1)} A); Ω în gol "
+        f"{ro(A['W_gol'], 3)} rad/s (teoretic {ro(A['W_gol_teoretic'], 3)}); cu sarcină Ω = {ro(A['W_final'], 3)} rad/s, "
+        f"I = {ro(A['I_final'], 1)} A (teoretic {ro(A['W_sarcina_teoretic'], 3)} rad/s, {ro(A['I_sarcina_teoretic'], 1)} A) |",
         f"| B – accelerare, regulator PI de curent ({sim['B_fc_Hz']} Hz), slăbire de câmp | 0–100 km/h: **{ro(Bz['t_100'], 2)} s** "
         f"(P2: {ro(S['R2']['ta'], 2)} s); 0–200 km/h: {ro(Bz['t_200'], 2)} s; v_max atinsă: {da(Bz['atins_vmax'])} în {ro(Bz['t_vmax'], 1)} s; "
         f"I de vârf {ro(Bz['I_varf'], 1)} A |",

@@ -1,0 +1,112 @@
+{
+  "note": "Ipoteze de proiectare pentru P5-P6; sursele sunt în câmpurile 'sursa'. Valorile marcate 'alegere' sunt decizii de proiectare.",
+  "dcdc": {
+    "f_s_Hz": 20000,
+    "N_faze": 4,
+    "ondulatie_I_rel": 0.3,
+    "ondulatie_U_rel": 0.01,
+    "eta_invertor": 0.985,
+    "eta_dcdc_ipoteza": 0.98,
+    "modul": {
+      "nume": "Wolfspeed CAB760M12HM3 (semipunte SiC 1200 V)",
+      "U_DS_V": 1200,
+      "I_D_A": 765,
+      "T_C_I_D_C": 90,
+      "R_DS_on_25_mOhm": 1.33,
+      "R_DS_on_cald_mOhm": 2.34,
+      "T_cald_C": 175,
+      "E_on_mJ": 23.7,
+      "E_off_mJ": 17.8,
+      "E_ref_U_V": 600,
+      "E_ref_I_A": 760,
+      "sursa": "Wolfspeed CAB760M12HM3 Data Sheet Rev. 5 (09.2025), p.1-2 – https://assets.wolfspeed.com/uploads/2024/01/Wolfspeed_CAB760M12HM3_data_sheet.pdf"
+    },
+    "rezerva_curent": 0.8,
+    "U_trecere_rel": 0.95,
+    "sursa_ondulatie": "TI SLVA372D, Basic Calculation of a Boost Converter's Power Stage, p.2 eq.2, p.4 (ondulație 20-40 %), p.6 eq.12 – https://www.ti.com/lit/an/slva372d/slva372d.pdf",
+    "sursa_f_s": "alegere; Wolfspeed CRD-60DD12N (boost SiC intercalat 470-800 V -> 850 V, 78 kHz, 99,5 %) – https://www.wolfspeed.com/crd-60dd12n/",
+    "condensator": {
+      "nume": "TDK B32778J0207K000 (MKP, 200 µF, 1100 V, 66 A)",
+      "C_uF": 200,
+      "U_V": 1100,
+      "I_rms_A": 66,
+      "sursa": "TDK, Film Capacitors – Capacitors for DC Link B3277*, p.13 – https://www.tdk-electronics.tdk.com/inf/20/20/db/fc_2009/MKP_B32774_778.pdf"
+    },
+    "sursa_eta": "Wolfspeed CRD-60DD12N: 99,5 % (vârf); ipoteza 98,5 % ține cont de puterea mare"
+  },
+  "chopper": {
+    "f_pwm_Hz": 10000,
+    "modulatie": "unipolara",
+    "sursa_f_pwm": "Reiter et al., PWM Dead Times in Automotive Traction Inverters, IET Power Electronics 2026 (Infineon), p.1-2: 'typical automotive switching frequencies of 10 kHz' – https://www.infineon.com/assets/row/public/documents/10/54/iet-power-electronics-2026-reiter--pwm-dead-times-in-automotive-traction-inverters-using-igbt-sic-mosfet-or-si-sic.pdf"
+  },
+  "incarcator": {
+    "P_AC_W": 22000,
+    "U_AC_V": 400,
+    "U_dc_PFC_V": 880,
+    "eta_PFC": 0.985,
+    "eta_buck": 0.985,
+    "f_s_max_Hz": 45000,
+    "ondulatie_I_rel": 0.3,
+    "I_taiere_celula_A": 0.05,
+    "SOC_initial": 0.1,
+    "OCV_celula_SOC0_V": 3.0,
+    "dt_medie_s": 1.0,
+    "sursa_PFC": "Wolfspeed CRD-22AD12N: front-end activ 22 kW, 3 x 305-450 V, 32 A, ieșire 650-900 V c.c., 45 kHz, 98,5 % – https://www.wolfspeed.com/crd-22ad12n/",
+    "sursa_buck": "Wolfspeed CRD-22DD12N (22 kW, 98,5 % vârf) – https://www.wolfspeed.com/crd-22dd12n/ ; în practică etajul este izolat (CLLC), aici simplificat la coborâtor neizolat, ca în exemplul de curs",
+    "sursa_celula": "Molicel INR-21700-P50B Product Data Sheet v1.1: încărcare CC-CV la 4,2 V, standard 5 A (1C), maxim 25 A (5C), -20...60 °C",
+    "sursa_taiere": "(S) Evlithium – fișa P50B: 'constant 4.2V charge ... or 50mA taper current' – http://www.evlithium.com/hot-lithium-battery/molicell-21700-battery-p50b-lithium-battery.html",
+    "curba_descarcare_02C": {
+      "nota": "Molicel P50B, curba de descărcare 0,2C la 23 °C, valori citite de pe grafic (aproximative)",
+      "Q_mAh": [
+        0,
+        500,
+        1000,
+        1500,
+        2000,
+        2500,
+        3000,
+        3500,
+        4000,
+        4500,
+        4920
+      ],
+      "U_V": [
+        4.18,
+        4.05,
+        3.95,
+        3.83,
+        3.74,
+        3.64,
+        3.53,
+        3.4,
+        3.2,
+        2.97,
+        2.5
+      ]
+    }
+  },
+  "simulare": {
+    "dcdc": {
+      "dt": 2.5e-07,
+      "t_end": 0.04,
+      "salvare": 4,
+      "t_tractiune": 0.005,
+      "t_franare": 0.022,
+      "P_franare_rel": 0.5,
+      "U_bat_V": 684,
+      "fc_I_Hz": 2000,
+      "fc_U_Hz": 200
+    },
+    "incarcare": {
+      "dt": 1e-07,
+      "t_end": 0.12,
+      "salvare": 20,
+      "k_timp": 10000,
+      "t_CC_s": 0.02,
+      "fc_U_Hz": 200,
+      "Kp_R": 0.2,
+      "tau_filtru_s": 0.0001,
+      "tau_filtru_I_s": 0.002
+    }
+  }
+}
