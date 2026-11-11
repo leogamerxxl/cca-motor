@@ -14,6 +14,10 @@ for q = 1:numel(surse)
         break;
     catch e
         erori = sprintf('%s\n   %s -> %s', erori, strrep(surse{q}, newline, ' '), e.message);
+        try
+            delete_block(cale);              % un bloc creat pe jumătate nu trebuie să blocheze varianta următoare
+        catch
+        end
     end
 end
 if ~gasit

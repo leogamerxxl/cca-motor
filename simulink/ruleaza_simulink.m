@@ -29,11 +29,13 @@ fprintf('  biblioteca Specialized Power Systems (sps_lib): %s\n', mat2str(exist(
 if ~exist('MODELE', 'var')
     MODELE = {'c3_A', 'c3_D', 'masina', 'dcdc', 'incarcator', 'ansamblu'};
 end
-fprintf('\nParametrii (din scripturile etapelor 2-4)...\n');
-P = parametri_simulink();
-Z = simulari(P.S, P.M, P.T);                                         % referința MATLAB pentru C3
-Rd = sim_dcdc_comutatie(P.D, P.S.cv.simulare.dcdc);                  % referința MATLAB pentru DC-DC
-Ri = sim_incarcare_comutatie(P.C, P.S.cv.simulare.incarcare);        % referința MATLAB pentru încărcător
+if ~(exist('REFERINTE_CALCULATE', 'var') && REFERINTE_CALCULATE)
+    fprintf('\nParametrii și simulările de referință (din scripturile etapelor 2-4)...\n');
+    P = parametri_simulink();
+    Z = simulari(P.S, P.M, P.T);                                     % referința MATLAB pentru C3
+    Rd = sim_dcdc_comutatie(P.D, P.S.cv.simulare.dcdc);              % referința MATLAB pentru DC-DC
+    Ri = sim_incarcare_comutatie(P.C, P.S.cv.simulare.incarcare);    % referința MATLAB pentru încărcător
+end
 
 rezultate = struct();
 stare = cell(numel(MODELE), 3);

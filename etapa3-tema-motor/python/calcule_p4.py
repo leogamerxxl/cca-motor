@@ -249,7 +249,9 @@ def fig_simulari(R, d):
             "sim_C_ansamblu.png", d)
 
 
-def fig_schema(d):
+def fig_schema(R, d):
+    S, M, T = R["S"], R["M"], R["T"]
+    B = S["B"]
     fig, ax = plt.subplots(figsize=(12, 6.0))
     ax.set_xlim(0, 120)
     ax.set_ylim(0, 60)
@@ -269,17 +271,18 @@ def fig_schema(d):
                                                                shrinkA=0, shrinkB=0))
 
     y0, h0 = 26, 10
-    bloc(2, y0, 15, h0, "Baterie Li-ion\n190s31p Molicel P50B\n475–798 V, 106 kWh")
+    bloc(2, y0, 15, h0, f"Baterie Li-ion\n{B['Ns']}s{B['Np']}p Molicel P50B\n{ro(B['U_min'], 0)}–{ro(B['U_max'], 0)} V, "
+                        f"{ro(B['W_real_kWh'], 0)} kWh")
     bloc(23, y0, 16, h0, "Convertor DC-DC\nbidirecțional\n(ridicător / coborâtor)")
     bloc(45, y0, 14, h0, "3 × invertor SiC\n(chopper în 4 cadrane\nla echivalentul MCC)")
-    bloc(65, y0, 15, h0, "3 × mașină YM720\nPMSM, model MCC\n180 kW / 350 kW")
-    bloc(86, y0, 12, h0, "3 × reductor\n1/i_rd = 4,15")
-    bloc(104, y0, 13, h0, "Roți (1 față +\n2 spate)\nvehicul 2245 kg")
+    bloc(65, y0, 15, h0, f"{T['N']} × mașină YM720\nPMSM, model MCC\n{ro(M['P_n']/1e3, 0)} kW / {ro(M['P_max']/1e3, 0)} kW")
+    bloc(86, y0, 12, h0, f"{T['N']} × reductor\n1/i_rd = {ro(T['k_rd'], 2)}")
+    bloc(104, y0, 13, h0, f"Roți (1 față +\n2 spate)\nvehicul {ro(S['V']['M'], 0)} kg")
     for x1, x2 in ((17, 23), (39, 45), (59, 65), (80, 86), (98, 104)):
         traseu([(x1 + 0.5, y0 + 6.5), (x2 - 0.5, y0 + 6.5)])
     for x1, x2 in ((17, 23), (39, 45), (59, 65)):
         traseu([(x2 - 0.5, y0 + 3.0), (x1 + 0.5, y0 + 3.0)], cul=CUL[2], ls="--")
-    ax.text(42, y0 + 8.4, "U_conv\n800 V", ha="center", fontsize=7.5, color=TEXT2)
+    ax.text(42.6, y0 + 10.6, f"U_conv = {ro(T['U_conv'], 0)} V", ha="left", fontsize=7.5, color=TEXT2)
     # regulatoare și referințe
     bloc(23, 46, 16, 7, "Regulator U_conv\n(PI tensiune → PI curent)", cul=reg, tc="white", fs=8)
     bloc(50, 46, 26, 7, "Regulator de viteză (PI) → T_ref\nlimitat: M_max, P_max/Ω, aderență", cul=reg, tc="white", fs=8)
@@ -320,7 +323,7 @@ def figuri(R, d):
     fig_pierderi(R, d)
     fig_caracteristici(R, d)
     fig_simulari(R, d)
-    fig_schema(d)
+    fig_schema(R, d)
 
 
 # ---------------------------------------------------------------- tabelele din README.md
