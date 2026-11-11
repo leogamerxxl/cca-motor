@@ -95,7 +95,7 @@ invertorului și DC-DC-ului; în P3 și în confirmările etapei 3 s-a folosit r
 ![Intercalarea fazelor](figuri/p5_dcdc_intercalare.png)
 
 <!-- AUTO:dcdc_text -->
-Cele 4 faze defazate cu T_s/4 își compensează ondulațiile; efectul depinde de factorul de umplere. La tracțiune (D ≈ 0,23, aproape de 1/4, unde compensarea este aproape completă) ondulația curentului bateriei este de 7,6 ori mai mică decât a unei faze (9,0 A față de 68,3 A); la recuperare (D ≈ 0,11) reducerea este mai mică (24,1 A față de 36,8 A). Ondulația tensiunii circuitului intermediar (0,18 V, respectiv 0,23 V) este mult sub cele 8 V ale calculului acoperitor cu o singură fază (în simulare sarcina este ideală, fără ondulația de curent a invertoarelor). Puterea sarcinii trece de la 0 la 559 kW și apoi la −280 kW (o schimbare de 839 kW) cu pante de 2 ms; tensiunea circuitului intermediar rămâne între 793,9 V și 811,9 V – vârful depășește cu 1,5 % tensiunea maximă din domeniul de aplicare al motoarelor (800 V); peste 808 V (+1 %) tensiunea stă în total 0,93 ms.
+Cele 4 faze defazate cu T_s/4 își compensează ondulațiile; efectul depinde de factorul de umplere. La tracțiune (D ≈ 0,23, aproape de 1/4, unde compensarea este aproape completă) ondulația curentului bateriei este de 7,6 ori mai mică decât a unei faze (9,0 A față de 68,3 A); la recuperare (D ≈ 0,11) reducerea este mai mică (24,1 A față de 36,8 A). Ondulația tensiunii circuitului intermediar (0,18 V, respectiv 0,23 V) este mult sub cele 8 V ale calculului acoperitor cu o singură fază (în simulare sarcina este ideală, fără ondulația de curent a invertoarelor). Puterea sarcinii trece de la 0 la 559 kW și apoi la −280 kW (o schimbare de 839 kW) cu pante de 2 ms; tensiunea circuitului intermediar rămâne între 791,6 V și 811,9 V – vârful depășește cu 1,5 % tensiunea maximă din domeniul de aplicare al motoarelor (800 V); peste 808 V (+1 %) tensiunea stă în total 0,93 ms.
 <!-- /AUTO:dcdc_text -->
 
 ## 2. Chopperul în 4 cadrane (invertorul echivalent)
@@ -152,7 +152,7 @@ Inductivitatea echivalentă L_a = τ_a·R_a (etapa 3) face ca ondulația curentu
 | Încărcător cu comutație (timp scalat 1:10000) | trecere CC → CV la 20,63 ms; I la t_CC + τ = 9,93 A; f în CC = 15,2 kHz; oprire (I < 1,55 A) la 74,9 ms | model mediu: 20 ms (impus prin OCV inițial); 9,84 A; 15,3 kHz; oprire la 74,7 ms |
 | DC-DC cu comutație – tracțiune (559 kW) | I_bat = 913 A, U_bat = 612,4 V, D = 0,2344, U_dc = 800,00 V; ΔI pe fază 68,3 A, ΔI_bat 9,0 A, ΔU_dc 0,18 V | D = 0,2345; ΔI pe fază = 67,1 A; ΔU_dc ≤ 8 V |
 | DC-DC cu comutație – recuperare (280 kW) | I_bat = −392 A, U_bat = 714,7 V, D = 0,1073, U_dc = 800,07 V; ΔI pe fază 36,8 A, ΔI_bat 24,1 A | D = 0,1066; ΔI pe fază = 35,6 A |
-| DC-DC – schimbările de sarcină (pante de 2 ms) | U_dc min 793,9 V la intrarea în tracțiune, max 811,9 V la trecerea în recuperare | −0,8 % / +1,5 % |
+| DC-DC – schimbările de sarcină (pante de 2 ms) | U_dc min 791,6 V, max 811,9 V (vârful la trecerea în recuperare) | −1,0 % / +1,5 % |
 <!-- /AUTO:simulari -->
 
 ![Încărcarea CC-CV](figuri/p5_incarcare_cccv.png)
