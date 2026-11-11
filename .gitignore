@@ -4,3 +4,8 @@ octave-workspace
 *.asv
 slprj/
 *.slxc
+# rezultatele și modelele generate local de ruleaza_simulink
+simulink/rezultate/*
+!simulink/rezultate/.gitkeep
+simulink/modele/*
+!simulink/modele/.gitkeep
