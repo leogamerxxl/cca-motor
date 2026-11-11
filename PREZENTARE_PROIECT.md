@@ -75,11 +75,11 @@ Ciclul: accelerare 0 → V1 = 50 km/h cu a = 7,688 m/s², rulare cu V1, decelera
 | W_stocată | W01/η + W12/η − η·W2f | 73,07 kWh |
 | **W_bat** | W_stocată/(1 − 0,3) | **104,38 kWh** |
 
-**Bateria** (celula Molicel INR-21700-P50B: 3,6 V, 5,0 Ah, 60 A continuu, 12,8 mΩ): Ns = ⌊800/4,2⌋ = 190 în serie, Np = max(energie 31, curent 23) = 31 în paralel → **190s31p**, 5890 celule, 106,02 kWh, 475–798 V (nominal 684 V), celule 418 kg, pachet ≈ 664 kg (28,2 % din M ≤ 30 %: DA).
+**Bateria** (celula Molicel INR-21700-P50B: 3,6 V, 5,0 Ah, 60 A continuu, 12,8 mΩ): Ns = ⌊800/4,2⌋ = 190 în serie, Np = max(energie 31, curent 23) = 31 în paralel → **190s31p**, 5 890 celule, 106,02 kWh, 475–798 V (nominal 684 V), celule 418 kg, pachet ≈ 664 kg (28,2 % din M ≤ 30 %: DA).
 
 ## 4. P4 – Tema de proiect
 
-Mașina electrică: **3 × YASA YM720** (mașină sincronă cu magneți permanenți, flux axial (răcire cu ulei)), 1 față + 2 spate; descrisă și simulată cu ecuațiile MCC din C3 (echivalentul de curent continuu al motorului comandat vectorial).
+Mașina electrică: **3 × YASA YM720** (mașină sincronă cu magneți permanenți, cu flux axial și răcire cu ulei), 1 față + 2 spate; descrisă și simulată cu ecuațiile MCC din C3 (echivalentul de curent continuu al motorului comandat vectorial).
 
 | Mărime | Pe motor | Total | Obținută din |
 |---|---|---|---|
@@ -90,13 +90,17 @@ Mașina electrică: **3 × YASA YM720** (mașină sincronă cu magneți permanen
 | M_n | 350 Nm | 1 050 Nm | catalog |
 | P_max | 350 kW | 1 050 kW | catalog; necesar 518,8 kW (P2) |
 | I_max | 463,9 A | 1 391,7 A | (M_max + T_f0 + F_v·Ω_b)/k |
-| M_max | 700 Nm | 2 100 Nm | catalog; necesar față 580 Nm, spate 497 Nm/motor |
-| Reductor i_rd | 0,2410 (1:4,15) | – | ales: n(v_max) = 9 936 rot/min ≤ n_max |
+| M_max | 700 Nm | 2 100 Nm | catalog; necesar față 602 Nm, spate 516 Nm/motor |
+| Reductor i_rd | 0,2500 (1:4,00) | – | ales: n(v_max) = 9 577 rot/min ≤ n_max (rezervă 4,2 %) |
 | Baterie W_bat | 104,38 kWh necesar | 106,02 kWh instalat | P3 |
 
-Cerințele vehiculului: P_rn = 296,3 kW, n_rn = 2 394 rot/min, M_rn = 1 181,6 Nm; P_rmax = 513,6 kW, n_rmax = 2 394 rot/min, M_rmax = 6 470,9 Nm.
+Necesarul vehiculului la roți: P_rn = 296,3 kW, n_rn = 2 394 rot/min, M_rn = 1 181,6 Nm; P_rmax = 513,6 kW (limitată de aderență), n_rmax = 2 394 rot/min, M_rmax = 6 470,9 Nm. Necesar pe motor: P_max 172,9 kW, M_max 545 Nm, I_max 361 A (la 3 032 rot/min); P_n 99,7 kW, M_n 99,5 Nm, I_n 140,1 A.
 
-**Confirmări:** MCC – N·P_max ≥ P_max (DA), N·P_n ≥ P_n (DA), cuplu pe punți (DA), tensiune (DA); reductor – turație (DA), cuplu la roți 8 628 ≥ 6 471 Nm (DA); baterie – energie (DA), curent pe celulă 44,0 A ≤ 60 A (DA), putere (DA).
+**Limita de putere.** Bateria și DC-DC-ul sunt dimensionate pentru P_max din P2 (518,8 kW), deci în simulări puterea fiecărui motor este limitată la P_lim = min(P_max, P_nec,max/N) = 172,9 kW, nu la 350 kW din catalog.
+
+**Frânarea recuperativă.** La decelerarea din P3 (a = 7,688 m/s²) sarcina se mută pe puntea față (cota 63,3 %, h/L = 0,17). Forța de frânare electrică maximă – limitată de cuplul motoarelor și de aderența fiecărei punți – este 14,78 kN, față de 17,73 kN necesari: mașinile preiau 83,4 % (T_rec = 426,8 Nm/motor), restul îl dă frâna mecanică.
+
+**Confirmări:** MCC – N·P_max ≥ P_max (DA), N·P_n ≥ P_n (DA), cuplu pe punți (DA), tensiune (DA); reductor – turație (DA), cuplu la roți 8 316 ≥ 6 471 Nm (DA); baterie – energie (DA), curent pe celulă 44,0 A ≤ 60 A (DA), putere (DA).
 
 ![Schema bloc](etapa3-tema-motor/figuri/p4_schema_bloc.png)
 
@@ -121,24 +125,26 @@ U = E + R_a·I + ΔU_p, E = k·Φ·Ω, T_E = k·Φ·I; P_Fe = K_H·Ω + K_F·Ω�
 | nominal (n_n, M_n) | 4 911 | 350,0 | 187,50 | 3,750 | 2,625 | 1,125 | 96,00 |
 | cuplu maxim (P_max/M_max) | 4 775 | 700,0 | 368,28 | 14,691 | 2,520 | 1,073 | 95,04 |
 | putere maximă la n_max | 10 000 | 334,2 | 376,97 | 15,158 | 7,875 | 3,938 | 92,85 |
-| v_max (P_n necesar / N) | 9 936 | 95,9 | 112,79 | 1,357 | 7,793 | 3,892 | 88,44 |
-| 100 km/h, viteză constantă | 3 145 | 17,3 | 7,65 | 0,016 | 1,405 | 0,541 | 74,37 |
-| 50 km/h, viteză constantă (P3) | 1 573 | 10,7 | 2,54 | 0,007 | 0,580 | 0,190 | 69,44 |
+| v_max (P_n necesar / N) | 9 577 | 99,5 | 112,07 | 1,340 | 7,340 | 3,640 | 89,01 |
+| 100 km/h, viteză constantă | 3 032 | 17,9 | 7,56 | 0,017 | 1,337 | 0,510 | 75,34 |
+| 50 km/h, viteză constantă (P3) | 1 516 | 11,1 | 2,51 | 0,007 | 0,554 | 0,181 | 70,40 |
 
 Harta de randament: η_max = 96,00 % la 4 917 rot/min și 347 Nm; η ≥ 95 % pe 23,8 % din domeniu.
 
 ![Harta de randament](etapa3-tema-motor/figuri/c3_harta_randament.png)
 
-Încălzirea (Q = m·c·ΔT, m·c = 16 500 J/K, fără răcire): accelerare 0–100 km/h ΔT = 2,04 K; 30 s la M_max ΔT = 33,2 K; la v_max pierderi 13,04 kW/motor (47,4 K/min fără răcire); la 50 km/h 777 W/motor – puterea de răcire în regim permanent.
+Încălzirea (Q = m·c·ΔT, m·c = 16 500 J/K, fără răcire): accelerare 0–100 km/h ΔT = 2,16 K; 30 s la M_max ΔT = 33,2 K; la v_max pierderi 12,32 kW/motor (44,8 K/min fără răcire); la 50 km/h 742 W/motor – puterea de răcire în regim permanent.
 
 ## 6. Simulările mașinii și ale ansamblului
 
 | Simulare | Rezultat |
 |---|---|
 | A – pornire în gol la U_p, treaptă de sarcină M_n | I vârf 283,6 A; Ω gol 20,667 rad/s (teoretic 20,669); cu sarcină 10,390 rad/s, 231,9 A (teoretic 10,390 rad/s, 231,9 A) |
-| B – accelerare cu regulator de curent și slăbire de câmp | 0–100 km/h 3,72 s (P2: 3,66 s), 0–200 km/h 7,56 s, v_max în 14,2 s |
-| D – rampă de tensiune cu sarcina vehiculului | I vârf 463,9 A, n final 7 584 rot/min |
-| C – ansamblu pe ciclul P3 scurtat (baterie → DC-DC → invertoare → motoare → roți) | eroare de viteză ≤ 2,16 km/h; η lanț: accelerare 0,774, palier 0,735, recuperare 0,764; I_bat -304 … 447 A; energie din baterie 168,4 kJ (P3: 136,9 kJ) |
+| B – accelerare cu regulator de curent și slăbire de câmp | 0–100 km/h 3,71 s (P2: 3,66 s), 0–200 km/h 9,72 s, v_max în 27,2 s |
+| D – rampă de tensiune cu sarcina vehiculului | I vârf 463,9 A, n final 7 411 rot/min |
+| C – ansamblu pe ciclul P3 scurtat (baterie → DC-DC → invertoare → motoare → roți) | eroare de viteză ≤ 2,04 km/h (accelerarea durează 1,905 s față de 1,807 s în P3: cuplul este la limita de aderență, 545 Nm/motor, deci vehiculul nu recuperează întârzierea față de rampa de referință); η roți ↔ baterie: accelerare 0,746, palier staționar 0,672, recuperare 0,649 (frâna mecanică preia 20,7 % din energia de frânare); I_bat −249 … 450 A; energie din baterie 204,2 kJ (P3: 136,9 kJ) |
+
+**Bateria pe ciclul P3 complet, cu randamentele simulate:** energia necesară este 87,0 kWh (P3 cu η = 0,8: 73,1 kWh); bateria de 106,0 kWh parcurge ciclul, dar rezerva scade la 17,9 % cu toate cele 3 motoare cuplate la 50 km/h. Cu puntea față decuplată rezerva este 25,9 %, cu un singur motor activ 33,8 % (≥ 30 %): decuplarea motoarelor nefolosite la sarcină mică este o cerință a temei.
 
 ![Ansamblu](etapa3-tema-motor/figuri/sim_C_ansamblu.png)
 
@@ -146,7 +152,7 @@ Harta de randament: η_max = 96,00 % la 4 917 rot/min și 347 Nm; η ≥ 95 % pe
 
 | Bloc | Calcul | Simulare cu comutație |
 |---|---|---|
-| DC-DC bidirecțional, 4 faze, 20 kHz, Wolfspeed CAB760M12HM3 (semipunte SiC 1200 V) | P = 558 kW; D = 1 − U_bat/U_dc = 0,0025…0,406; I_bat max 1 198 A; L = U_bat·D/(ΔI·f_s) = 107,4 µH/fază; C ≥ 1 770 µF; pierderi 2,59 kW | tracțiune: D = 0,2344 (teoretic 0,2342), ΔI faza 68,1 A (formula 66,8), ΔI_bat 10,4 A (intercalare); recuperare -391 A; U_dc 767…864 V la trepte |
+| DC-DC bidirecțional, 4 faze, 20 kHz, Wolfspeed CAB760M12HM3 (semipunte SiC 1200 V) | P = 559 kW; D = 1 − U_bat/U_dc = 0,05…0,406 (trecere directă peste U_bat = 760 V); I_bat max 1 202 A; L = U_bat·D/(ΔI·f_s) = 107,1 µH/fază; C ≥ 1 775 µF; pierderi 2,60 kW | tracțiune: D = 0,2344 (teoretic 0,2345), ΔI pe fază 68,3 A (formula 67,1), ΔI_bat 9,0 A (intercalare); recuperare −392 A; U_dc 791,6…811,9 V la schimbările de sarcină (pante de 2 ms) |
 | Chopper în punte H (invertorul echivalent), 10 kHz | ΔI = U_dc/(8·L_a·f) = 18,3 A (3,9 % din I_max) | în modelul Simulink de ansamblu |
 | Încărcător 22 kW: PFC 880 V + coborâtor cu histerezis | CC 26,75 A (0,17C) până la 798 V, CV până la 1,55 A; L = 605 µH (h = 8,0 A); 10 → 100 %: 5,31 h | trecerea CC → CV la 20,6 ms (mediu: 20 ms, timp scalat), oprire la 74,9 ms (74,7) |
 
@@ -158,11 +164,14 @@ Harta de randament: η_max = 96,00 % la 4 917 rot/min și 347 Nm; η ≥ 95 % pe
 
 În folderul [`simulink`](simulink), `ruleaza_simulink` construiește automat, simulează și compară cu calculele Matlab șase modele: modelul MCC din C3 cu blocuri Simulink (scenariile A și D), mașina ca bloc **DC Machine** (Specialized Power Systems, ca în exemplul de curs), DC-DC-ul bidirecțional cu 4 faze, încărcătorul CC-CV cu histerezis și sistemul complet (baterie → DC-DC → punte H → DC Machine + vehicul, pe ciclul P3). Fișierele `.slx` rezultate se deschid și se modifică normal în Simulink.
 
+**Starea:** modelele nu au fost încă rulate în MATLAB (mediul în care a fost scris proiectul nu are MATLAB). Structura lor (căile blocurilor, parametrii, porturile și nodurile electrice) a fost verificată în GNU Octave cu un simulator al funcțiilor Simulink ([`simulink/verificare_octave`](simulink/verificare_octave)). Rezultatele apar după rularea `ruleaza_simulink` în MATLAB R2023b, în `simulink/rezultate/`.
+
 ## 9. Concluzii
 
 1. Vehiculul mediu (2 356 kg) cere P_max = 519 kW la ax (limitat de aderență, 0–100 km/h în 3,66 s) și P_n = 299 kW la v_max = 316 km/h.
 2. Bateria 190s31p cu celule Molicel P50B (106,0 kWh) acoperă energia P3 (104,4 kWh cu rezerva de 30 %) și curentul de vârf (44,0 A/celulă).
-3. Cele 3 motoare YASA YM720 (1:4,15) confirmă tema cu rezervă de putere; modelul MCC echivalent are η_max = 96,0 % și reproduce 0–100 km/h în 3,72 s.
+3. Cele 3 motoare YASA YM720 (1:4,00) confirmă tema; puterea pe motor este limitată de sistem la 172,9 kW. Modelul MCC echivalent are η_max = 96,0 % și dă 0–100 km/h în 3,71 s (P2: 3,66 s, limita de aderență).
 4. DC-DC-ul bidirecțional cu 4 faze SiC (L = 107 µH/fază, C ≈ 1,8 mF) menține 800 V la tracțiune și recuperare; încărcătorul de 22 kW încarcă bateria în 5,3 h.
-5. La viteză constantă mică randamentul lanțului scade (3 motoare mari pentru câțiva kW): η = 0,8 din P3 este optimist pe palierul de 50 km/h, dar rezerva de 30 % a bateriei acoperă diferența; folosirea unui singur motor la viteză constantă ar crește randamentul.
+5. La viteză constantă mică randamentul lanțului scade (3 motoare mari pentru câțiva kW): η = 0,8 din P3 este optimist la 50 km/h (0,672 simulat cu 3 motoare). Bateria parcurge ciclul, dar rezerva de 30 % se păstrează doar cu un singur motor activ la viteză constantă (33,8 %).
+6. Frânarea recuperativă preia 83,4 % din forța de frânare a ciclului P3 (limita de aderență a punții spate și cuplul motoarelor din față); restul revine frânelor mecanice.
 

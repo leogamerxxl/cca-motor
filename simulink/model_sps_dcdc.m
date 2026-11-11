@@ -54,6 +54,9 @@ save_system(mdl, fisier);
 out = simuleaza(mdl);
 [t, Udc] = citeste(out, 'sps_Udc');  [~, Ib] = citeste(out, 'sps_Ibat');  [~, Is] = citeste(out, 'sps_Isarc');
 [~, D1] = citeste(out, 'sps_D1');
+if abs(Udc(1) - D.U_dc) > 5
+    warning('cca:x0', 'U_dc(0) = %.1f V, așteptat %.1f V: verificați tensiunea inițială a condensatorului', Udc(1), D.U_dc);
+end
 IL = zeros(numel(t), N);
 for q = 1:N
     [~, IL(:, q)] = citeste(out, sprintf('sps_IL%d', q));

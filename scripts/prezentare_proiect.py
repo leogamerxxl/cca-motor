@@ -234,7 +234,8 @@ def main():
     w(f"| D – rampă de tensiune cu sarcina vehiculului | I vârf {ro(Dz['I_varf'], 1)} A, n final {ro(Dz['W_final']*60/(2*math.pi), 0)} rot/min |")
     E = CA["E"]
     w(f"| C – ansamblu pe ciclul P3 scurtat (baterie → DC-DC → invertoare → motoare → roți) | eroare de viteză ≤ {ro(CA['eroare_v_max']*3.6, 2)} km/h "
-      f"(accelerarea durează {ro(CA['t_acc'], 3)} s față de {ro(CA['t1'], 3)} s în P3, din cauza limitei de putere); "
+      f"(accelerarea durează {ro(CA['t_acc'], 3)} s față de {ro(CA['t1'], 3)} s în P3: cuplul este la limita de aderență, "
+      f"{ro(CA['T_ad'], 0)} Nm/motor, deci vehiculul nu recuperează întârzierea față de rampa de referință); "
       f"η roți ↔ baterie: accelerare {ro(CA['eta_acc'], 3)}, palier staționar {ro(CA['eta_pal_stabil'], 3)}, recuperare {ro(CA['eta_rec'], 3)} "
       f"(frâna mecanică preia {ro(100*CA['cota_fm'], 1)} % din energia de frânare); "
       f"I_bat {ro(CA['I_bat_min'], 0)} … {ro(CA['I_bat_max'], 0)} A; energie din baterie {ro(E['total_bat']/1e3, 1)} kJ (P3: {ro(CA['P3']['W_stocata']/1e3, 1)} kJ) |")

@@ -15,9 +15,14 @@ addpath(aici);
 % scripturile etapelor 2-4 (necesare și când referințele sunt deja calculate, REFERINTE_CALCULATE = true)
 addpath(fullfile(aici, '..', 'etapa2-calcule', 'matlab'), fullfile(aici, '..', 'etapa3-tema-motor', 'matlab'), ...
         fullfile(aici, '..', 'etapa4-convertoare', 'matlab'));
+% în MATLAB, simulatorul din verificare_octave/ nu trebuie să ascundă funcțiile Simulink reale
+if ~exist('OCTAVE_VERSION', 'builtin') && ~isempty(strfind(which('add_block'), 'verificare_octave'))
+    rmpath(fullfile(aici, 'verificare_octave'));
+end
 if ~exist(fullfile(aici, 'modele'), 'dir'), mkdir(fullfile(aici, 'modele')); end
 if ~exist(fullfile(aici, 'rezultate'), 'dir'), mkdir(fullfile(aici, 'rezultate')); end
 jurnal = fullfile(aici, 'rezultate', 'jurnal_simulink.txt');
+diary off;
 if exist(jurnal, 'file'), delete(jurnal); end
 diary(jurnal);
 fprintf('=== CCA – modelele Simulink (%s) ===\n', datestr(now, 'yyyy-mm-dd HH:MM'));
@@ -29,21 +34,30 @@ for tb = {'Simulink', 'Simscape', 'Simscape Electrical'}
 end
 fprintf('  biblioteca Specialized Power Systems (sps_lib): %s\n', mat2str(exist('sps_lib', 'file') == 4));
 
-if ~exist('MODELE', 'var')
-    MODELE = {'c3_A', 'c3_D', 'masina', 'dcdc', 'incarcator', 'ansamblu'};
+% selecția MODELE se folosește o singură dată (o rulare ulterioară fără selecție rulează toate modelele)
+if exist('MODELE', 'var')
+    modele = MODELE;  clear MODELE;
+else
+    modele = {'c3_A', 'c3_D', 'masina', 'dcdc', 'incarcator', 'ansamblu'};
 end
 if ~(exist('REFERINTE_CALCULATE', 'var') && REFERINTE_CALCULATE)
     fprintf('\nParametrii și simulările de referință (din scripturile etapelor 2-4)...\n');
-    P = parametri_simulink();
-    Z = simulari(P.S, P.M, P.T);                                     % referința MATLAB pentru C3
-    Rd = sim_dcdc_comutatie(P.D, P.S.cv.simulare.dcdc);              % referința MATLAB pentru DC-DC
-    Ri = sim_incarcare_comutatie(P.C, P.S.cv.simulare.incarcare);    % referința MATLAB pentru încărcător
+    try
+        P = parametri_simulink();
+        Z = simulari(P.S, P.M, P.T);                                     % referința MATLAB pentru C3
+        Rd = sim_dcdc_comutatie(P.D, P.S.cv.simulare.dcdc);              % referința MATLAB pentru DC-DC
+        Ri = sim_incarcare_comutatie(P.C, P.S.cv.simulare.incarcare);    % referința MATLAB pentru încărcător
+    catch e
+        fprintf(2, 'EROARE la calculele de referință: %s\n', e.message);
+        diary off;
+        rethrow(e);
+    end
 end
 
 rezultate = struct();
-stare = cell(numel(MODELE), 3);
-for q = 1:numel(MODELE)
-    m = MODELE{q};
+stare = cell(numel(modele), 3);
+for q = 1:numel(modele)
+    m = modele{q};
     fprintf('\n--- %s ---\n', m);
     tic;
     try

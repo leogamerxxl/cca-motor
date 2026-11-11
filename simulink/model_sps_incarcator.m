@@ -42,7 +42,11 @@ bloc(mdl, 'SumEi', L.suma, [800 120 820 170], 'Inputs', '+-');
 bloc(mdl, 'Histerezis', L.releu, [850 130 890 160], 'OnSwitchValue', nr(C.h / 2), 'OffSwitchValue', nr(-C.h / 2), ...
      'OnOutputValue', '1', 'OffOutputValue', '0');
 c('U_m/o1', 'Filtru_U/i1');  c('U_CV/o1', 'SumEu/i1');  c('Filtru_U/o1', 'SumEu/i2');  c('SumEu/o1', 'PI_U/i1');
-c('PI_U/o1', 'SumEi/i1');  c('I_m/o1', 'SumEi/i2');  c('SumEi/o1', 'Histerezis/i1');  c('Histerezis/o1', 'S/i1');
+% curentul măsurat trece printr-o întârziere de un pas (ca în sim_incarcare_comutatie.m și ca să nu apară o
+% buclă algebrică măsură -> releu -> poarta tranzistorului)
+bloc(mdl, 'I_z', L.intarziere, [740 130 770 160], 'SampleTime', nr(Ts), 'InitialCondition', '0');
+c('PI_U/o1', 'SumEi/i1');  c('I_m/o1', 'I_z/i1');  c('I_z/o1', 'SumEi/i2');  c('SumEi/o1', 'Histerezis/i1');
+c('Histerezis/o1', 'S/i1');
 % --- sfârșitul încărcării: faza CV (I_ref < 0,99 I_CC) și curentul mediu < I_taiere ---
 bloc(mdl, 'Filtru_I', L.filtru, [580 300 640 330], 'Numerator', '1', 'Denominator', mat2str([sc.tau_filtru_I_s 1], 16));
 bloc(mdl, 'I_mic', L.relational, [680 300 710 330], 'Operator', '<');
@@ -55,9 +59,9 @@ c('I_m/o1', 'Filtru_I/i1');  c('Filtru_I/o1', 'I_mic/i1');  c('I_taiere/o1', 'I_
 c('PI_U/o1', 'CV/i1');  c('Prag_CV/o1', 'CV/i2');
 c('I_mic/o1', 'Si/i1');  c('CV/o1', 'Si/i2');  c('Si/o1', 'Stop/i1');
 % --- ieșiri ---
-spre_workspace(mdl, 'W_I', 'sps_I', [900 60 970 80], 40);
-spre_workspace(mdl, 'W_U', 'sps_U', [900 100 970 120], 40);
-spre_workspace(mdl, 'W_Iref', 'sps_Iref', [900 220 970 240], 40);
+spre_workspace(mdl, 'W_I', 'sps_I', [900 60 970 80], 1);         % rezoluție completă: ondulația în banda h
+spre_workspace(mdl, 'W_U', 'sps_U', [900 100 970 120], 1);
+spre_workspace(mdl, 'W_Iref', 'sps_Iref', [900 220 970 240], 1);
 c('I_m/o1', 'W_I/i1');  c('U_m/o1', 'W_U/i1');  c('PI_U/o1', 'W_Iref/i1');
 bloc(mdl, 'Scope', L.scope, [1000 60 1030 140], 'NumInputPorts', '2');
 c('I_m/o1', 'Scope/i1');  c('U_m/o1', 'Scope/i2');
@@ -68,9 +72,13 @@ fisier = fullfile(P.dir_modele, [mdl '.slx']);
 save_system(mdl, fisier);
 out = simuleaza(mdl);
 [t, I] = citeste(out, 'sps_I');  [~, U] = citeste(out, 'sps_U');  [~, Iref] = citeste(out, 'sps_Iref');
+if abs(U(1) - OCV0) > 5
+    warning('cca:x0', 'U_bat(0) = %.1f V, așteptat %.1f V: verificați tensiunea inițială a condensatorului', U(1), OCV0);
+end
 rez.model = mdl;  rez.fisier = fisier;
 k = find(Iref < 0.99 * C.I_CC, 1);
-rez.t_CC = t(k);                  rez.t_CC_ref = Rm.t_CC;
+if isempty(k), rez.t_CC = NaN; else, rez.t_CC = t(k); end
+rez.t_CC_ref = Rm.t_CC;
 rez.t_stop = t(end);              rez.t_stop_ref = Rm.t_stop;   rez.t_stop_mediu = Rm.t_stop_teoretic;
 m = t > 0.2 * sc.t_CC_s & t < 0.9 * sc.t_CC_s;
 rez.I_med_CC = mean(I(m));        rez.I_CC = C.I_CC;

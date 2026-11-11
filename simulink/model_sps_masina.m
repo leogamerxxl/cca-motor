@@ -11,6 +11,13 @@ M = P.M;  sp = P.S.ip.simulare;  L = biblioteci();
 mdl = model_nou('cca_sps_masina_ym720');
 
 bloc(mdl, 'powergui', L.powergui, [40 20 120 60], 'SimulationMode', 'Continuous');
+% SPS pornește implicit circuitele în regim staționar (aici i_A(0) = U_p/R_a); referința rk4.m pornește de la
+% I = 0, deci stările electrice inițiale se pun la zero
+try
+    set_param([mdl '/powergui'], 'x0status', 'zero');
+catch e
+    warning('cca:x0', 'powergui: x0status = zero nu a putut fi setat (%s)', e.message);
+end
 bloc(mdl, 'Ua', L.sursa_dc, [60 140 90 180], 'Amplitude', nr(M.U_p));
 bloc(mdl, 'Masa', L.masa, [60 230 90 260]);
 bloc(mdl, 'Masina', L.masina_cc, [200 130 290 210], ...
@@ -50,6 +57,9 @@ fisier = fullfile(P.dir_modele, [mdl '.slx']);
 save_system(mdl, fisier);
 out = simuleaza(mdl);
 [t, I] = citeste(out, 'sps_I');  [~, W] = citeste(out, 'sps_W');  [~, Tax] = citeste(out, 'sps_Tax');
+if abs(I(1)) > 1
+    warning('cca:x0', 'i_A(0) = %.1f A: curentul inițial nu este 0 (inițializare SPS în regim staționar)', I(1));
+end
 A = Z.A;
 rez.model = mdl;  rez.fisier = fisier;
 k0 = find(t < sp.A_t_treapta, 1, 'last');
