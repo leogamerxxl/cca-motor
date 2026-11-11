@@ -40,6 +40,8 @@ def dimensionare_dcdc(S):
     D["D_max"] = 1 - D["U_bat_min"] / D["U_dc"]
     D["D_min"] = 1 - D["U_bat_max"] / D["U_dc"]
     D["D_nom"] = 1 - D["U_bat_nom"] / D["U_dc"]
+    D["U_trecere"] = cv["U_trecere_rel"] * D["U_dc"]
+    D["D_min_regl"] = 1 - cv["U_trecere_rel"]
     D["I_bat_max"] = D["P_bat_max"] / D["U_bat_min"]
     D["I_faza_max"] = D["I_bat_max"] / D["N_faze"]
     D["I_dc_max"] = D["P_dc_max"] / D["U_dc"]
@@ -270,8 +272,12 @@ def sim_dcdc_comutatie(D, sc):
         tk = (k - 1) * dt
         if tk < sc["t_tractiune"]:
             P = 0.0
+        elif tk < sc["t_tractiune"] + sc["t_rampa"]:
+            P = D["P_dc_max"] * (tk - sc["t_tractiune"]) / sc["t_rampa"]
         elif tk < sc["t_franare"]:
             P = D["P_dc_max"]
+        elif tk < sc["t_franare"] + sc["t_rampa"]:
+            P = D["P_dc_max"] - (1 + sc["P_franare_rel"]) * D["P_dc_max"] * (tk - sc["t_franare"]) / sc["t_rampa"]
         else:
             P = -sc["P_franare_rel"] * D["P_dc_max"]
         isarc = P / u

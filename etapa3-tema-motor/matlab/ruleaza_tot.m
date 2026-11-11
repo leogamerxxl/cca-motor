@@ -29,8 +29,8 @@ iesire.sim.A = struct('I_varf', Z.A.I_varf, 'W_gol', Z.A.W_gol, 'W_final', Z.A.W
 iesire.sim.B = struct('t_100', Z.B.t_100, 't_200', Z.B.t_200, 't_vmax', Z.B.t_vmax, ...
     'atins_vmax', Z.B.atins_vmax, 'I_varf', Z.B.I_varf, 'T_ad', Z.B.T_ad, 'esantioane', esant(Z.B, [1 3 10]));
 iesire.sim.D = struct('I_varf', Z.D.I_varf, 'W_final', Z.D.W_final, 'esantioane', esant(Z.D, [2 5 8]));
-iesire.sim.C = rmfield(C, {'t', 'I', 'W', 'v', 'v_ref', 'U', 'phi', 'T_ax', 'I_ref', 'P_ax', 'P_el', ...
-    'P_dc', 'P_bat', 'I_bat', 'U_bat', 'P_chim'});
+iesire.sim.C = rmfield(C, {'t', 'I', 'W', 'v', 'v_ref', 'U', 'phi', 'T_ax', 'I_ref', 'T_fm', 'P_ax', 'P_el', ...
+    'P_dc', 'P_bat', 'I_bat', 'U_bat', 'P_chim', 'P_fm', 'P_rez'});
 iesire.sim.C.esantioane = esant(C, [1 4 8]);
 
 aici = fileparts(mfilename('fullpath'));

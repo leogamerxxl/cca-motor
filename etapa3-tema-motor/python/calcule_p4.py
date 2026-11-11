@@ -26,7 +26,12 @@ from matplotlib.patches import FancyBboxPatch  # noqa: E402
 AICI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AICI))
 import model_p4 as mp  # noqa: E402
-from calcule_p2_p3 import ro, virgula, actualizeaza_readme  # noqa: E402  (din etapa 2, prin model_p4)
+from calcule_p2_p3 import ro as _ro, virgula, actualizeaza_readme  # noqa: E402  (din etapa 2, prin model_p4)
+
+
+def ro(x, d=2):
+    """Număr în format românesc, cu semnul minus tipografic."""
+    return _ro(x, d).replace("-", "−")
 
 RADACINA = mp.RADACINA
 RPM = mp.RPM
@@ -68,7 +73,7 @@ def curata(o):
     return o
 
 
-SERII = ("t", "I", "W", "v", "v_ref", "U", "phi", "T_ax", "I_ref", "P_ax", "P_el", "P_dc", "P_bat", "I_bat",
+SERII = ("t", "I", "W", "v", "v_ref", "U", "phi", "T_ax", "I_ref", "T_fm", "P_fm", "P_rez", "P_ax", "P_el", "P_dc", "P_bat", "I_bat",
          "U_bat", "P_chim")
 
 
@@ -242,7 +247,8 @@ def fig_simulari(R, d):
             "D – rampă de tensiune cu sarcina vehiculului (scenariul refăcut în Simulink)", "sim_D_rampa.png", d)
     panouri([("v [km/h]", [(C["t"], C["v_ref"] * 3.6, "referință", TEXT2, "--"), (C["t"], C["v"] * 3.6, "vehicul", CUL[0], "-")]),
              ("P [kW]", [(C["t"], C["P_ax"] / 1e3, "P la axul celor 3 motoare", CUL[0], "-"),
-                         (C["t"], C["P_bat"] / 1e3, "P la bornele bateriei", CUL[1], "-")]),
+                         (C["t"], C["P_bat"] / 1e3, "P la bornele bateriei", CUL[1], "-"),
+                         (C["t"], C["P_fm"] / 1e3, "P în frânele mecanice", CUL[2], "-")]),
              ("I_bat [A]", [(C["t"], C["I_bat"], "I_bat", CUL[0], "-")]),
              ("U_bat [V]", [(C["t"], C["U_bat"], "U_bat", CUL[0], "-")])],
             "C – simulare pe ansamblu: ciclul P3 scurtat (accelerare, palier 50 km/h, frânare recuperativă)",
@@ -306,7 +312,7 @@ def fig_schema(R, d):
     lx, ly = 86, 6
     for q, (cul, ls, txt) in enumerate((("#3d3d3a", "-", "flux de putere la tracțiune / comenzi"),
                                         (CUL[2], "--", "frânare recuperativă (invertor + DC-DC coborâtor)"),
-                                        (gri, ":", "măsuri: tensiune, curent, viteză"))):
+                                        (gri, ":", "mărimi măsurate: tensiune, curent, viteză"))):
         ax.plot([lx, lx + 5], [ly + 12 - 4 * q] * 2, color=cul, ls=ls, lw=1.4)
         ax.text(lx + 6, ly + 12 - 4 * q, txt, va="center", fontsize=7.5, color=TEXT)
     ax.text(60, 58, "Schema bloc a sistemului de propulsie (după suportul P4, slide 4)", ha="center", fontsize=11,
@@ -331,30 +337,40 @@ def da(x):
     return "DA" if x else "NU"
 
 
+def sci(x, d=4):
+    """x·10^e în format românesc (de exemplu 4,5334·10⁻³)."""
+    if x == 0:
+        return "0"
+    e = int(math.floor(math.log10(abs(x))))
+    sup = str(e).translate(str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹"))
+    return f"{ro(x / 10 ** e, d)}·10{sup}"
+
+
 def tabele(R, nr_comp=None):
     S, M, T, P, H, Z, C, Hc = R["S"], R["M"], R["T"], R["puncte"], R["harta"], R["Z"], R["C"], R["H"]
     ip, mot, B = S["ip"], S["mot"], S["B"]
     N = T["N"]
+    sim = ip["simulare"]
     tb = {}
     tb["tema"] = "\n".join([
-        "| Mărime | Pe motor | Total (3 motoare) | Cum s-a obținut |",
-        "|---|---|---|---|",
-        f"| P_n | {ro(M['P_n']/1e3, 0)} kW | {ro(N*M['P_n']/1e3, 0)} kW | catalog YASA (continuu) |",
-        f"| U_n | {ro(M['U_n'], 0)} V | – | tensiunea circuitului intermediar, reglată de DC-DC |",
-        f"| I_n | {ro(M['I_n'], 1)} A | {ro(N*M['I_n'], 1)} A | echivalent MCC: P_n/(η_n·U_n), η_n = {ro(M['eta_n'], 3)} |",
-        f"| n (nominală) | {ro(M['n_n'], 0)} rot/min | – | n_n = P_n/M_n; n_max = {ro(M['n_max'], 0)} rot/min |",
-        f"| M_n | {ro(M['M_n'], 0)} Nm | {ro(N*M['M_n'], 0)} Nm | catalog (continuu) |",
-        f"| P_max | {ro(M['P_max']/1e3, 0)} kW | {ro(N*M['P_max']/1e3, 0)} kW | catalog (vârf {mot['durata_varf_s']} s) |",
-        f"| I_max | {ro(M['I_max'], 1)} A | {ro(N*M['I_max'], 1)} A | echivalent MCC la M_max și n_b = {ro(M['n_b'], 0)} rot/min |",
-        f"| M_max | {ro(M['M_max'], 0)} Nm | {ro(N*M['M_max'], 0)} Nm | catalog (vârf) |",
-        f"| Reductor i_rd | {ro(T['i_rd'], 4)} (1:{ro(T['k_rd'], 2)}) | – | ales: n motor la v_max = {ro(T['n_m_vmax'], 0)} rot/min ≤ n_max |",
-        f"| Baterie W_bat | necesar {ro(T['W_bat_nec']/3.6e6, 2)} kWh | instalat {ro(T['W_bat_inst']/3.6e6, 2)} kWh | P3 + celula Molicel P50B, {B['Ns']}s{B['Np']}p |",
+        "| Mărime | Pe motor (catalog) | Total (3 motoare) | Cerut pe motor | Cum s-a obținut |",
+        "|---|---|---|---|---|",
+        f"| P_n | {ro(M['P_n']/1e3, 0)} kW | {ro(N*M['P_n']/1e3, 0)} kW | {ro(T['Pm_n_nec']/1e3, 1)} kW la v_max | catalog YASA (continuu); cerut: P_n din P2 / 3 |",
+        f"| U_n | {ro(M['U_n'], 0)} V | – | – | tensiunea circuitului intermediar, reglată de DC-DC |",
+        f"| I_n | {ro(M['I_n'], 1)} A | {ro(N*M['I_n'], 1)} A | {ro(T['Im_n_nec'], 1)} A la v_max | echivalent MCC: P_n/(η_n·U_n), η_n = {ro(M['eta_n'], 3)} |",
+        f"| n | {ro(M['n_n'], 0)} rot/min (n_max {ro(M['n_max'], 0)}) | – | {ro(T['n_m_vmax'], 0)} rot/min la v_max | n_n = P_n/M_n |",
+        f"| M_n | {ro(M['M_n'], 0)} Nm | {ro(N*M['M_n'], 0)} Nm | {ro(T['Mm_n_nec'], 1)} Nm la v_max | catalog (continuu) |",
+        f"| P_max | {ro(M['P_max']/1e3, 0)} kW | {ro(N*M['P_max']/1e3, 0)} kW | {ro(T['Pm_max_nec']/1e3, 1)} kW la {ro(T['nm_max_nec'], 0)} rot/min | catalog (vârf {mot['durata_varf_s']} s); cerut: P_max din P2 / 3 |",
+        f"| I_max | {ro(M['I_max'], 1)} A | {ro(N*M['I_max'], 1)} A | {ro(T['Im_max_nec'], 1)} A | echivalent MCC la M_max și n_b = {ro(M['n_b'], 0)} rot/min |",
+        f"| M_max | {ro(M['M_max'], 0)} Nm | {ro(N*M['M_max'], 0)} Nm | {ro(T['Mm_max_nec'], 1)} Nm (egal); față {ro(T['M_nec_fata'], 0)} Nm | catalog (vârf); cerut pe punți: § 2 |",
+        f"| Reductor i_rd | {ro(T['i_rd'], 4)} (1:{ro(T['k_rd'], 2)}) | – | – | ales: n la v_max = {ro(T['n_m_vmax'], 0)} rot/min, rezervă {ro(100*(1-T['n_m_vmax']/M['n_max']), 1)} % față de n_max |",
+        f"| Baterie W_bat | necesar {ro(T['W_bat_nec']/3.6e6, 2)} kWh | instalat {ro(T['W_bat_inst']/3.6e6, 2)} kWh | – | P3 + celula Molicel P50B, {B['Ns']}s{B['Np']}p |",
     ])
     tb["vehicul"] = "\n".join([
         "| Regim | P_r | n_r | M_r | Observații |",
         "|---|---|---|---|---|",
-        f"| nominal (rulare cu v_max) | {ro(T['P_rn']/1e3, 1)} kW | {ro(T['n_rn'], 0)} rot/min | {ro(T['M_rn'], 1)} Nm | v_max = {ro(S['R2']['vmax']*3.6, 1)} km/h |",
-        f"| maxim (accelerare la limita de aderență) | {ro(T['P_rmax']/1e3, 1)} kW | {ro(T['n_rmax'], 0)} rot/min (max.) | {ro(T['M_rmax'], 1)} Nm | P_rmax la 100 km/h ({ro(T['n_r_Va'], 0)} rot/min) |",
+        f"| nominal (rulare cu v_max) | {ro(T['P_rn']/1e3, 1)} kW | {ro(T['n_rn'], 0)} rot/min | {ro(T['M_rn'], 1)} Nm | v_max = {ro(S['R2']['vmax']*3.6, 1)} km/h; P = M·Ω |",
+        f"| maxim | {ro(T['P_rmax']/1e3, 1)} kW (la 100 km/h, {ro(T['n_r_Va'], 0)} rot/min) | {ro(T['n_rmax'], 0)} rot/min (turația maximă, la v_max) | {ro(T['M_rmax'], 1)} Nm (limita de aderență) | P_rmax și M_rmax la accelerarea 0–100 km/h; n_rmax este alt punct |",
     ])
     tb["confirmari"] = "\n".join([
         "| Confirmare | Condiție | Valori | Rezultat |",
@@ -363,12 +379,13 @@ def tabele(R, nr_comp=None):
         f"| MCC – putere nominală | N·P_n ≥ P_n necesar | {ro(N*M['P_n']/1e3, 0)} ≥ {ro(T['P_nec_n']/1e3, 1)} kW | {da(T['ok_P_n'])} |",
         f"| MCC – cuplu puntea față | M_max ≥ f_față·M_nec | {ro(M['M_max'], 0)} ≥ {ro(T['M_nec_fata'], 1)} Nm (f_față = {ro(T['f_fata'], 3)}) | {da(T['ok_M_fata'])} |",
         f"| MCC – cuplu puntea spate | M_max ≥ (1 − f_față)·M_nec/2 | {ro(M['M_max'], 0)} ≥ {ro(T['M_nec_spate'], 1)} Nm | {da(T['ok_M_spate'])} |",
-        f"| MCC – tensiune | U_dc,min ≤ U_conv ≤ U_dc,max | {mot['U_dc_min_V']} ≤ {ro(T['U_conv'], 0)} ≤ {mot['U_dc_max_V']} V | {da(T['ok_U'])} |",
+        f"| MCC – tensiune | U_dc,min ≤ U_conv ≤ U_dc,max | {mot['U_dc_min_V']} ≤ {ro(T['U_conv'], 0)} ≤ {mot['U_dc_max_V']} V | {da(T['ok_U'])} (fără rezervă, vezi etapa 4) |",
         f"| Reductor – turație | n_max ≥ n la v_max | {ro(M['n_max'], 0)} ≥ {ro(T['n_m_vmax'], 0)} rot/min | {da(T['ok_n_max'])} |",
         f"| Reductor – cuplu la roți | N·M_max·k_rd·η_rd ≥ M_rmax | {ro(T['M_roti_disp'], 0)} ≥ {ro(T['M_rmax'], 0)} Nm | {da(T['ok_M_roti'])} |",
+        f"| Frânare recuperativă (a = {ro(T['a_fr'], 2)} m/s², P3) | F recuperabilă ≥ F necesară | {ro(T['F_rec_max']/1e3, 2)} kN (față {ro(T['F_fata_fr']/1e3, 2)}, spate {ro(T['F_spate_fr']/1e3, 2)}) față de {ro(T['F_fr_nec']/1e3, 2)} kN | {da(T['ok_frana'])}: {ro(100*T['cota_rec'], 1)} % electric, restul frâna mecanică |",
         f"| Baterie – energie | W instalat ≥ W necesar | {ro(T['W_bat_inst']/3.6e6, 2)} ≥ {ro(T['W_bat_nec']/3.6e6, 2)} kWh | {da(T['ok_W_bat'])} |",
         f"| Baterie – curent celulă | I_celulă(P_max, U_min) ≤ {S['cel']['I_max_cont']} A | {ro(B['I_celula'], 1)} A | {da(T['ok_I_cel'])} |",
-        f"| Baterie – putere | P disponibilă·η ≥ P_max | {ro(T['P_mec_disp']/1e3, 0)} ≥ {ro(T['P_nec_max']/1e3, 1)} kW | {da(T['ok_P_bat'])} |",
+        f"| Baterie – putere | {S['cel']['I_max_cont']} A·N_p·U_min·η ≥ P_max | {ro(T['P_mec_disp']/1e3, 0)} ≥ {ro(T['P_nec_max']/1e3, 1)} kW | {da(T['ok_P_bat'])} (U_min = tensiunea la borne) |",
     ])
     tb["parametri"] = "\n".join([
         "| Parametru | Valoare | Relația |",
@@ -376,16 +393,14 @@ def tabele(R, nr_comp=None):
         f"| P1_n, pierderi la n_n | {ro(M['P1_n']/1e3, 2)} kW; {ro(M['SP_n']/1e3, 3)} kW | P1_n = P_n/η_n |",
         f"| R_a | {ro(M['R_a'], 5)} Ω | R_a = {ro(ip['cota_Cu'], 2)}·ΣP_n / I_n² |",
         f"| k = k_E = k_M | {ro(M['k'], 5)} V·s/rad = Nm/A | k = (U_n − R_a·I_n − ΔU_p)/Ω_n |",
-        f"| K_H, K_F | {ro(M['K_H'], 4)} Nm; {M['K_F']:.4e} Nm·s/rad".replace(".", ",")
-        + f" | P_Fe = K_H·Ω + K_F·Ω², P_Fe(n_n) = {ro(M['P_Fe_n']/1e3, 3)} kW, P_Fe(n_max) = {ro(ip['raport_Fe_max'], 1)}·P_Fe(n_n) |",
-        f"| T_m0, F_m | {ro(M['T_m0'], 4)} Nm; {M['F_m']:.4e} Nm·s/rad".replace(".", ",")
-        + f" | P_fv = T_m0·Ω + F_m·Ω², P_fv(n_max) = {ro(ip['raport_mec_max'], 1)}·P_fv(n_n) |",
-        f"| T_f0, F_v | {ro(M['T_f0'], 4)} Nm; {M['F_v']:.4e} Nm·s/rad".replace(".", ",") + " | T_f0 = K_H + T_m0, F_v = K_F + F_m |",
+        f"| K_H, K_F | {ro(M['K_H'], 4)} Nm; {sci(M['K_F'])} Nm·s/rad | P_Fe = K_H·Ω + K_F·Ω², P_Fe(n_n) = {ro(M['P_Fe_n']/1e3, 3)} kW, P_Fe(n_max) = {ro(ip['raport_Fe_max'], 1)}·P_Fe(n_n) |",
+        f"| T_m0, F_m | {ro(M['T_m0'], 4)} Nm; {sci(M['F_m'])} Nm·s/rad | P_fv = T_m0·Ω + F_m·Ω², P_fv(n_max) = {ro(ip['raport_mec_max'], 1)}·P_fv(n_n) |",
+        f"| T_f0, F_v | {ro(M['T_f0'], 4)} Nm; {sci(M['F_v'])} Nm·s/rad | T_f0 = K_H + T_m0, F_v = K_F + F_m |",
         f"| Verificare T_ax(n_n) | {ro(M['T_ax_n_verif'], 3)} Nm | k·I_n − T_f0 − F_v·Ω_n = M_n |",
         f"| Viteza de bază n_b | {ro(M['n_b'], 0)} rot/min | U_n = k·Ω_b + R_a·I_max |",
         f"| Pornire directă la U_n | I_p = {ro(M['I_p_Un'], 0)} A, M_p = {ro(M['M_p_Un'], 0)} Nm | I_p = (U_n − ΔU_p)/R_a – inadmisibil |",
         f"| Tensiunea de pornire U_p | {ro(M['U_p'], 2)} V | U_p = R_a·I_max + ΔU_p |",
-        f"| L_a, τ_a | {M['L_a']*1e6:.0f} µH; {ro(M['tau_a']*1e3, 2)} ms".replace(".", ",") + " | τ_a = L_a/R_a |",
+        f"| L_a, τ_a | {ro(M['L_a']*1e6, 0)} µH; {ro(M['tau_a']*1e3, 2)} ms | L_a = τ_a·R_a |",
         f"| J_rotor | {ro(M['J_rotor'], 3)} kg·m² | – |",
     ])
     rows = ["| # | Punct de funcționare | n [rot/min] | T_ax [Nm] | Φ/Φ_n | U [V] | I [A] | P1 [kW] | P_a [kW] | P_Fe [kW] | "
@@ -395,25 +410,45 @@ def tabele(R, nr_comp=None):
                     f"{ro(p['I'], 1)} | {ro(p['P1']/1e3, 2)} | {ro(p['P_a']/1e3, 3)} | {ro(p['P_Fe']/1e3, 3)} | "
                     f"{ro(p['P_fv']/1e3, 3)} | {ro(p['P2']/1e3, 2)} | {ro(100*p['eta'], 2)} |")
     tb["puncte"] = "\n".join(rows)
-    tb["harta"] = (f"Randamentul maxim al modelului: **η_max = {ro(100*H['eta_max'], 2)} %** la n = {ro(H['n_eta_max'], 0)} rot/min, "
+    p3, p4, p5, p6 = P[2], P[3], P[4], P[5]
+    pal = {x["N_activ"]: x for x in C["palier"]}
+    tb["puncte_text"] = (
+        f"În punctul 3 (P_max la n_max) curentul echivalent este {ro(p3['I'], 1)} A, cu {ro(100*(p3['I']/M['I_max']-1), 1)} % peste "
+        f"I_max = {ro(M['I_max'], 1)} A din temă (I_max este calculat la M_max și n_b); la v_max (punctul 4) sunt necesari doar "
+        f"{ro(p4['I'], 0)} A.\n\n"
+        f"La sarcină mică (rulare cu 50 sau 100 km/h, {ro(p6['T'], 1)}–{ro(p5['T'], 1)} Nm pe motor) pierderile în fier și mecanice "
+        f"(care nu depind de cuplu) domină, iar randamentul scade la {ro(100*p6['eta'], 1)}–{ro(100*p5['eta'], 1)} %: cu 3 motoare de "
+        f"{ro(M['P_n']/1e3, 0)} kW pentru {ro(S['R3']['P1p']/1e3, 1)} kW la roți la 50 km/h, acționarea este supradimensionată la viteză "
+        f"constantă. Cu motoarele nefolosite decuplate mecanic randamentul motorului la 50 km/h crește la "
+        f"{ro(100*pal[2]['eta_motor'], 1)} % (2 motoare, puntea față decuplată) sau {ro(100*pal[1]['eta_motor'], 1)} % (1 motor) – § 10.")
+    tb["harta"] = (f"Randamentul maxim al modelului este **η_max = {ro(100*H['eta_max'], 2)} %** la n = {ro(H['n_eta_max'], 0)} rot/min, "
                    f"T_ax = {ro(H['T_eta_max'], 0)} Nm; zona cu η ≥ 95 % ocupă {ro(100*H['cota_95'], 1)} % din domeniul de "
-                   f"funcționare (grilă 120 × 120).")
+                   f"funcționare (grilă 120 × 120). Maximul se află în punctul nominal deoarece acolo s-a impus η_n = "
+                   f"{ro(100*M['eta_n'], 0)} % (valoarea de vârf a randamentului YASA), cu pierderile în cupru egale cu celelalte – "
+                   f"poziția și valoarea maximului sunt deci o consecință a ipotezelor, nu un rezultat independent.")
     tb["incalzire"] = "\n".join([
-        f"Un motor: m = {ro(M['masa'], 0)} kg, c = {ro(M['c'], 0)} J/(kg·K) → m·c = {ro(Hc['mc'], 0)} J/K (fără răcire).",
+        f"Un motor: m = {ro(M['masa'], 0)} kg, c = {ro(M['c'], 0)} J/(kg·K) → m·c = {ro(Hc['mc'], 0)} J/K; calcul adiabatic (fără răcire), "
+        "cu temperatura considerată uniformă în toată masa motorului.",
         "",
         "| Regim | Pierderi | Durată | Q | ΔT fără răcire |",
         "|---|---|---|---|---|",
         f"| Accelerare 0–100 km/h (simularea B) | {ro(Hc['acc']['P_med']/1e3, 2)} kW (medie) | {ro(Hc['acc']['durata'], 2)} s | "
         f"{ro(Hc['acc']['Q']/1e3, 1)} kJ | {ro(Hc['acc']['dT'], 2)} K |",
         f"| Cuplu maxim la {ro(Hc['varf']['n'], 0)} rot/min (vârf din catalog) | {ro(Hc['varf']['SP']/1e3, 2)} kW (η = {ro(100*Hc['varf']['eta'], 1)} %) | "
-        f"{Hc['varf']['durata']} s | {ro(Hc['varf']['Q']/1e3, 0)} kJ | {ro(Hc['varf']['dT'], 1)} K |",
+        f"{Hc['varf']['durata']} s | {ro(Hc['varf']['Q']/1e3, 0)} kJ | {ro(Hc['varf']['dT'], 1)} K (medie pe motor) |",
         f"| Rulare cu v_max ({ro(Hc['vmax']['n'], 0)} rot/min, {ro(Hc['vmax']['T'], 1)} Nm) | {ro(Hc['vmax']['SP']/1e3, 2)} kW (η = {ro(100*Hc['vmax']['eta'], 1)} %) | "
         f"1 min | {ro(Hc['vmax']['SP']*60/1e3, 0)} kJ | {ro(Hc['vmax']['dT_min'], 1)} K/min |",
         f"| Ciclul P3, palier 50 km/h ({ro(Hc['p3']['n'], 0)} rot/min, {ro(Hc['p3']['T'], 1)} Nm) | {ro(Hc['p3']['SP'], 0)} W (η = {ro(100*Hc['p3']['eta'], 1)} %) | "
-        f"{ro(S['R3']['t12']/3600, 2)} h | {ro(Hc['p3']['Q']/1e6, 1)} MJ | {ro(Hc['p3']['dT'], 0)} K (fără răcire) |",
+        f"{ro(S['R3']['t12']/3600, 2)} h | {ro(Hc['p3']['Q']/1e6, 1)} MJ | – (regim permanent: răcirea evacuează {ro(Hc['p3']['SP'], 0)} W) |",
+        "",
+        f"Media pe motor nu arată încălzirea locală: la vârful de {Hc['varf']['durata']} s pierderile în cupru "
+        f"({ro(M['R_a']*M['I_max']**2/1e3, 1)} kW) încălzesc în primul rând înfășurarea, care are doar o parte din masa motorului, deci "
+        "temperatura ei crește de mai multe ori mai mult decât media; de aceea vârful de 30 s este limitat de răcirea cu ulei și de "
+        f"temperatura inițială. La v_max modelul dă {ro(Hc['vmax']['SP']/1e3, 1)} kW pierderi pe motor, mai mult decât la punctul nominal "
+        f"({ro(M['SP_n']/1e3, 1)} kW), din cauza pierderilor în fier la turație mare (o estimare acoperitoare – cu slăbirea câmpului ele "
+        "sunt mai mici); rularea îndelungată cu v_max este deci limitată termic, nu de putere.",
     ])
     A, Bz, D = Z["A"], Z["B"], Z["D"]
-    sim = ip["simulare"]
     tb["simulari"] = "\n".join([
         "| Scenariu | Rezultat |",
         "|---|---|",
@@ -421,27 +456,77 @@ def tabele(R, nr_comp=None):
         f"{ro(sim['A_t_treapta']*1e3, 0)} ms | I de vârf {ro(A['I_varf'], 1)} A (I_max = {ro(M['I_max'], 1)} A); Ω în gol "
         f"{ro(A['W_gol'], 3)} rad/s (teoretic {ro(A['W_gol_teoretic'], 3)}); cu sarcină Ω = {ro(A['W_final'], 3)} rad/s, "
         f"I = {ro(A['I_final'], 1)} A (teoretic {ro(A['W_sarcina_teoretic'], 3)} rad/s, {ro(A['I_sarcina_teoretic'], 1)} A) |",
-        f"| B – accelerare, regulator PI de curent ({sim['B_fc_Hz']} Hz), slăbire de câmp | 0–100 km/h: **{ro(Bz['t_100'], 2)} s** "
+        f"| B – accelerare, regulator PI de curent ({sim['B_fc_Hz']} Hz), slăbire de câmp, cuplu limitat de aderență, M_max și "
+        f"puterea sistemului ({ro(T['P_lim_motor']/1e3, 1)} kW/motor) | 0–100 km/h: **{ro(Bz['t_100'], 2)} s** "
         f"(P2: {ro(S['R2']['ta'], 2)} s); 0–200 km/h: {ro(Bz['t_200'], 2)} s; v_max atinsă: {da(Bz['atins_vmax'])} în {ro(Bz['t_vmax'], 1)} s; "
         f"I de vârf {ro(Bz['I_varf'], 1)} A |",
         f"| D – rampă de tensiune {sim['D_panta']} V/s, sarcina vehiculului | I de vârf {ro(D['I_varf'], 1)} A; "
         f"n după {sim['D_t_end']} s = {ro(D['W_final']*RPM, 0)} rot/min (< n_max) |",
     ])
+    tb["simulari_text"] = (
+        f"Simularea B confirmă dimensionarea: cu cuplul limitat de aderență (ca în P2) vehiculul accelerează 0–100 km/h în "
+        f"{ro(Bz['t_100'], 2)} s (P2: {ro(S['R2']['ta'], 2)} s; diferența vine din inerția rotoarelor, "
+        f"J_rotor = {ro(M['J_rotor'], 2)} kg·m² pe motor, care în P2 a fost neglijată). Peste ≈ 100 km/h cuplul este limitat de "
+        f"puterea sistemului, {ro(T['P_nec_max']/1e3, 0)} kW la axul celor 3 motoare (P_max din P2, pentru care sunt dimensionate "
+        f"bateria și DC-DC-ul), nu de cei {ro(N*M['P_max']/1e3, 0)} kW de vârf ai motoarelor; cu slăbirea câmpului vehiculul atinge "
+        f"v_max în {ro(Bz['t_vmax'], 1)} s. În scenariul D fluxul urmează legea ideală Φ = Φ_n·Ω_b/Ω (t.e.m. constantă), de aceea "
+        "curentul tinde spre I_max. Scenariile A și D sunt refăcute și cu blocuri Simulink (modelele `c3_A`, `c3_D` din "
+        "[`../simulink`](../simulink)); modelele nu au fost încă rulate în MATLAB.")
     E = C["E"]
+    P3 = C["P3"]
     tb["ansamblu"] = "\n".join([
-        f"Ciclul P3 scurtat: 0 → {ro(C['V1']*3.6, 0)} km/h în {ro(C['t1'], 2)} s (a = {ro(C['a'], 2)} m/s²), palier {sim['C_t_palier']} s, "
-        f"frânare simetrică, oprire {sim['C_t_oprire']} s. Regulator de viteză PI cu poli dubli la −{sim['C_wn_viteza']} rad/s "
-        f"(K_p = {ro(C['Kp_w'], 1)} Nm·s/rad, K_i = {ro(C['Ki_w'], 1)} Nm/rad); eroarea maximă de viteză {ro(C['eroare_v_max']*3.6, 2)} km/h.",
+        f"Ciclul P3 scurtat: 0 → {ro(C['V1']*3.6, 0)} km/h cu a = {ro(C['a'], 2)} m/s² (aceeași accelerație ca în P3), palier "
+        f"{sim['C_t_palier']} s, frânare simetrică, oprire {sim['C_t_oprire']} s. Regulator de viteză PI cu poli dubli la "
+        f"−{sim['C_wn_viteza']} rad/s (K_p = {ro(C['Kp_w'], 1)} Nm·s/rad, K_i = {ro(C['Ki_w'], 1)} Nm/rad). Accelerația din P3 este "
+        "chiar limita de aderență, iar rotoarele adaugă inerție, deci regulatorul de viteză lucrează la limita de cuplu: "
+        f"eroarea maximă de viteză, {ro(C['eroare_v_max']*3.6, 2)} km/h, nu este o măsură a acordării regulatorului. Fazele sunt "
+        f"separate după viteza reală (accelerarea durează {ro(C['t_acc'], 2)} s). La frânare mașinile dau cel mult "
+        f"{ro(T['T_rec_max'], 0)} Nm (limitele motoarelor și ale aderenței pe punți, § 2); restul îl dă frâna mecanică.",
         "",
-        "| Faza | E la ax [kJ] | E la bornele motoarelor [kJ] | E în circuitul intermediar [kJ] | E din celule [kJ] | η lanț |",
+        "| Faza | E la roți [kJ] | E la ax [kJ] | E la bornele motoarelor [kJ] | E în circuitul intermediar [kJ] | E din celule [kJ] | E în frânele mecanice [kJ] | η roți ↔ baterie |",
+        "|---|---|---|---|---|---|---|---|",
+    ] + [
+        f"| {nume} | {ro(E[k]['roata']/1e3, 1)} | {ro(E[k]['ax']/1e3, 1)} | {ro(E[k]['el']/1e3, 1)} | {ro(E[k]['dc']/1e3, 1)} | "
+        f"{ro(E[k]['bat']/1e3, 1)} | {ro(E[k]['fm']/1e3, 1)} | {ro(C[ek], 3)} |"
+        for nume, k, ek in (("accelerare", "acc", "eta_acc"), ("palier 50 km/h", "palier", "eta_pal"),
+                            ("frânare (recuperat / energia de frânare)", "franare", "eta_rec"))
+    ] + [
+        "",
+        f"La frânare {ro(100*C['cota_fm'], 1)} % din energia de frânare trece prin frânele mecanice. Energia luată din baterie pe ciclul "
+        f"scurt: **{ro(E['total_bat']/1e3, 1)} kJ** (estimarea P3 cu η = {ro(S['C2']['eta'], 1)}: {ro(P3['W_stocata']/1e3, 1)} kJ). "
+        f"Curentul bateriei {ro(C['I_bat_min'], 0)} … {ro(C['I_bat_max'], 0)} A (max. {ro(C['I_celula_max'], 1)} A pe celulă), "
+        f"U_bat ≥ {ro(C['U_bat_min'], 0)} V.",
+    ])
+    pal3 = pal[3]
+    cel = S["cel"]
+    W_cel = cel["Cap_Ah"] * 3600 * cel["U_nom"]
+    Np_nec = math.ceil(P3["W_bat_sim"] / (B["Ns"] * W_cel))
+    W_nou = B["Ns"] * Np_nec * W_cel
+    m_nou = B["Ns"] * Np_nec * cel["m_kg"] / cel["k_celula_pachet"]
+    tb["baterie_ciclu"] = "\n".join([
+        f"**Confirmarea bateriei pe ciclu.** P3 a folosit un randament global η = {ro(S['C2']['eta'], 1)} atât la tracțiune, cât și la "
+        f"recuperare. Simularea dă randamente mai mici în toate fazele: {ro(C['eta_acc'], 3)} la accelerare, {ro(C['eta_rec'], 3)} la "
+        f"frânare (cu partea frânei mecanice) și, în regim staționar la 50 km/h, **{ro(C['eta_pal_stabil'], 3)}** "
+        f"({ro(C['P_bat_palier']/1e3, 2)} kW din baterie pentru {ro(S['R3']['P1p']/1e3, 2)} kW la roți). Refăcând calculul P3 pe tot ciclul "
+        f"(palierul de {ro(S['R3']['t12']/3600, 2)} h) cu aceste randamente, energia necesară este {ro(P3['W_stocata_sim']/3.6e6, 1)} kWh "
+        f"în loc de {ro(S['R3']['Wstocata']/3.6e6, 1)} kWh: bateria instalată ({ro(B['W_real']/3.6e6, 1)} kWh) parcurge ciclul, dar rezerva "
+        f"scade de la 30 % la {ro(100*P3['rezerva_sim'], 1)} % (cu regula din P3 ar fi necesari {ro(P3['W_bat_sim']/3.6e6, 1)} kWh).",
+        "",
+        "Randamentul la 50 km/h depinde de câte motoare rămân cuplate (calcul static cu harta C3; motoarele decuplate mecanic nu au pierderi):",
+        "",
+        "| Motoare active la 50 km/h | Cuplu pe motor | η motor | η roți → baterie | Energia ciclului P3 | Rezerva bateriei |",
         "|---|---|---|---|---|---|",
-        f"| accelerare | {ro(E['acc']['ax']/1e3, 1)} | {ro(E['acc']['el']/1e3, 1)} | {ro(E['acc']['dc']/1e3, 1)} | {ro(E['acc']['bat']/1e3, 1)} | {ro(C['eta_acc'], 3)} |",
-        f"| palier 50 km/h | {ro(E['palier']['ax']/1e3, 1)} | {ro(E['palier']['el']/1e3, 1)} | {ro(E['palier']['dc']/1e3, 1)} | {ro(E['palier']['bat']/1e3, 1)} | {ro(C['eta_pal'], 3)} |",
-        f"| frânare recuperativă | {ro(E['franare']['ax']/1e3, 1)} | {ro(E['franare']['el']/1e3, 1)} | {ro(E['franare']['dc']/1e3, 1)} | {ro(E['franare']['bat']/1e3, 1)} | {ro(C['eta_rec'], 3)} (recuperat/ax) |",
+    ] + [
+        f"| {x['N_activ']}{' (toate)' if x['N_activ'] == 3 else (' (puntea față decuplată)' if x['N_activ'] == 2 else ' (celelalte decuplate)')} | "
+        f"{ro(x['T_motor'], 1)} Nm | {ro(100*x['eta_motor'], 1)} % | {ro(x['eta'], 3)} | {ro(x['W_stocata']/3.6e6, 1)} kWh | {ro(100*x['rezerva'], 1)} % |"
+        for x in C["palier"]
+    ] + [
         "",
-        f"Energia luată din baterie pe ciclu: **{ro(E['total_bat']/1e3, 1)} kJ**; estimarea P3 (η = {ro(S['C2']['eta'], 1)}) pe același ciclu: "
-        f"{ro(C['P3']['W_stocata']/1e3, 1)} kJ. Curentul bateriei {ro(C['I_bat_min'], 0)} … {ro(C['I_bat_max'], 0)} A "
-        f"(max. {ro(C['I_celula_max'], 1)} A pe celulă), U_bat ≥ {ro(C['U_bat_min'], 0)} V, factorul de umplere al DC-DC ≤ {ro(C['D_max'], 3)}.",
+        f"Concluzie: cu η = 0,8 din P3 bateria este confirmată; simularea arată că rezerva de 30 % se păstrează numai dacă la viteză "
+        f"constantă se lucrează cu un singur motor (celelalte decuplate). Cu puntea față decuplată rezerva este {ro(100*pal[2]['rezerva'], 0)} %, "
+        f"cu toate cele 3 motoare {ro(100*pal3['rezerva'], 0)} %. Decuplarea motoarelor nefolosite la sarcină mică devine astfel o cerință a "
+        f"temei. Varianta cealaltă – mărirea bateriei la {Np_nec} ramuri în paralel ({ro(W_nou/3.6e6, 1)} kWh) – ar duce pachetul la "
+        f"≈ {ro(m_nou, 0)} kg, {ro(100*m_nou/S['V']['M'], 1)} % din masa vehiculului, peste limita de 30 % din P3.",
     ])
     if nr_comp:
         tb["comparatie"] = (f"Implementarea Python (python/model_p4.py) refăcută independent de MATLAB/Octave: {nr_comp[0]} mărimi comparate, "

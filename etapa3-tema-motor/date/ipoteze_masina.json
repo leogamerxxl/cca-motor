@@ -1,5 +1,5 @@
 {
-  "k_rd": 4.15,
+  "k_rd": 4.0,
   "eta_rd": 0.99,
   "N_motoare_sarcina": 3,
   "U_n_V": 800,
@@ -21,7 +21,7 @@
     "A_dt": 1e-05,
     "A_salvare": 10,
     "B_fc_Hz": 500,
-    "B_t_end": 20,
+    "B_t_end": 40,
     "B_dt": 0.0001,
     "B_salvare": 50,
     "D_U0": 0,
@@ -49,7 +49,7 @@
     "c": "NIST Chemistry WebBook (Cu 385, Fe ~449, Al ~897 J/(kg K)); Arnold N35H (NdFeB 460 J/(kg K)); repartiția maselor active YASA: Taran et al., IEEE TIA 58(1) 2022, Tab. II; carcasă de aluminiu presupusă 18-25 % -> 515-580; ales 500",
     "eta_invertor": "Wolfspeed XM3 inverter user guide PRD-06975 Rev.5, p.30: 300 kW cu ~2,6 kW pierderi (~99,1 %) – https://assets.wolfspeed.com/uploads/2021/06/CPWR-AN30.pdf ; redus la 98,5 % pentru sarcini parțiale",
     "eta_dcdc": "Ni et al., A 100-kW SiC Switched Tank Converter, IEEE TPEL 35(6) 2020 (97,4 % la 100 kW, 98,5 % la 50 kW) – https://par.nsf.gov/servlets/purl/10186979 ; Wolfspeed CRD-60DD12N (99,5 % vârf)",
-    "k_rd": "ales (P4: reductorul se alege liber) astfel încât n_motor(v_max) <= n_max = 10 000 rot/min",
+    "k_rd": "ales (P4: reductorul se alege liber): n_motor(v_max) = 9 578 rot/min, cu ~4 % rezervă față de n_max = 10 000 rot/min (creșterea razei roții și alunecarea la viteză mare)",
     "h_L, repartitie_statica_fata": "aceleași ipoteze ca în etapa 2 (date/motoare_catalog.json, ipoteze_punti)"
   }
 }

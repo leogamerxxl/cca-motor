@@ -59,7 +59,7 @@ Să se proiecteze un sistem de propulsie cu acționare electrică care să aibă
 | Baterie W_bat | necesar 104,38 kWh | instalat 106,02 kWh | P3 + celula Molicel P50B, 190s31p |
 <!-- /AUTO:tema -->
 
-Sistemul trebuie să propulseze vehiculul mediu din documentare (M = 2356 kg), având:
+Sistemul trebuie să propulseze vehiculul mediu din documentare (M = 2 356 kg), cu următoarele cerințe la roți:
 
 <!-- AUTO:vehicul -->
 | Regim | P_r | n_r | M_r | Observații |
@@ -69,11 +69,16 @@ Sistemul trebuie să propulseze vehiculul mediu din documentare (M = 2356 kg), a
 <!-- /AUTO:vehicul -->
 
 - Mărimile mașinii sunt **calculate din cerințele vehiculului** (P2: P_max = puterea la axul mașinii la 100 km/h cu
-  accelerația limitată de aderență, P_n = puterea la v_max) și **date de producător** (catalogul YASA), corelate cu
-  reductorul: cu 1/i_rd = 4,15 turația motoarelor la v_max este 9936 rot/min ≤ n_max = 10 000 rot/min.
-  (În P2 s-a folosit preliminar n_max = 15 000 rot/min; reductorul final este ales pentru motorul ales.)
-- **U_n = 800 V** este tensiunea circuitului intermediar, menținută constantă de convertorul DC-DC bidirecțional
-  (bateria are 475–798 V); **I_n și I_max** sunt curenții echivalentului MCC (I = P1/U), calculați în § 4.
+  accelerația limitată de aderență, P_n = puterea la v_max; coloana „Cerut pe motor”) și **date de producător**
+  (catalogul YASA), corelate cu reductorul ales liber (turația motoarelor la v_max rămâne sub n_max = 10 000 rot/min,
+  cu rezervă pentru creșterea razei roții la viteză mare). În P2 s-a folosit preliminar n_max = 15 000 rot/min;
+  reductorul final este ales pentru motorul ales.
+- **U_n = 800 V** este tensiunea circuitului intermediar, menținută de convertorul DC-DC bidirecțional (bateria are
+  475–798 V; aproape de încărcarea completă DC-DC-ul trece în regim de trecere directă, vezi etapa 4); **I_n și I_max**
+  sunt curenții echivalentului MCC (I = P1/U), calculați în § 4.
+- **Limita de putere a sistemului:** bateria și DC-DC-ul sunt dimensionate pentru P_max din P2 (≈ 519 kW la axul
+  motoarelor), nu pentru suma puterilor de vârf ale motoarelor (1 050 kW); de aceea comanda de cuplu este limitată și la
+  P_max/(3·Ω) pe motor (§ 9–10).
 - Bateria (W_bat) este cea dimensionată în P3 cu celule Molicel P50B (etapa 2).
 
 ## 2. Confirmări: MCC, reductor, baterie
@@ -93,10 +98,13 @@ Sistemul trebuie să propulseze vehiculul mediu din documentare (M = 2356 kg), a
 | Baterie – putere | P disponibilă·η ≥ P_max | 707 ≥ 518,8 kW | DA |
 <!-- /AUTO:confirmari -->
 
-Repartiția cuplului pe punți la accelerare ține cont de transferul de sarcină:
-f_față = 0,5 − (a/g)·(h/L) = 0,368 (h/L = 0,17, ipotezele din etapa 2). Puterea maximă a vehiculului este limitată de
-aderență (P2), deci cele 3 motoare (1050 kW de vârf) au rezervă mare de putere; cuplul cerut de puntea față
-(580 Nm) este sub M_max = 700 Nm.
+Repartiția cuplului pe punți ține cont de transferul de sarcină: la accelerare f_față = 0,5 − (a/g)·(h/L) = 0,368, la
+frânare f_față = 0,5 + (a/g)·(h/L) = 0,633 (h/L = 0,17, ipotezele din etapa 2). La accelerare motorul din față și cele
+din spate au rezervă de cuplu. La frânarea cu decelerația din P3, motorul din față nu poate prelua toată forța pe care o
+permite aderența punții față (ar trebui ≈ 1 000 Nm), iar puntea spate este limitată de aderență: frânarea recuperativă
+acoperă doar o parte din forța necesară, restul fiind preluat de frâna mecanică. În simulări cuplul este împărțit egal
+între cele 3 motoare (fiecare antrenează 1/3 din vehicul); forța totală este aceeași, dar curentul real al motorului din
+față la accelerare este cu ≈ 10 % mai mare.
 
 ## 3. Schema bloc (P4, slide 4)
 
@@ -105,7 +113,7 @@ aderență (P2), deci cele 3 motoare (1050 kW de vârf) au rezervă mare de pute
 | Bloc din schema de curs | Realizare în proiect | Unde se calculează / simulează |
 |---|---|---|
 | Sistem de stocare de energie | baterie Li-ion 190s31p (Molicel P50B), 475–798 V, 106 kWh | etapa 2 (P3), [`../etapa4-convertoare`](../etapa4-convertoare) |
-| Convertor DC-DC step-down + regulator U_conv | DC-DC **bidirecțional** cu 4 faze intercalate: ridicător la tracțiune (U_conv = 800 V), coborâtor la frânare | etapa 4 (P5-P6) |
+| „Convertor DC-DC step-down” + regulator U_conv | DC-DC **bidirecțional** cu 4 faze intercalate: ridicător la tracțiune (U_conv = 800 V), coborâtor la frânare (în schema de curs: coborâtor) | etapa 4 (P5-P6) |
 | Chopper / invertor + regulator I_mot | 3 invertoare SiC; la echivalentul MCC: chopper în punte H (4 cadrane), PI de curent | § 9, etapa 4, Simulink |
 | Mașină electrică | 3 × YASA YM720 (model MCC echivalent) | § 4–9 |
 | Reductor | 1/i_rd = 4,15, η_rd = 0,99 | § 1 |
@@ -123,7 +131,7 @@ Ecuațiile din curs, pentru un motor:
 - pierderile de cuplu: T_ax = T_E − T_f0 − F_v·Ω, cu T_f0 = K_H + T_m0 și F_v = K_F + F_m; J·dΩ/dt = T_ax − T_sarcină;
 - slăbirea de câmp: sub viteza de bază Φ = Φ_n și tensiunea este reglată (U < U_n); când tensiunea necesară
   depășește U_n, fluxul se reduce (la PMSM prin curentul i_d), alegând cel mai mare flux k·Φ = x care satisface
-  W·x² − (U_n − ΔU_p)·x + R_a·T_E = 0.
+  Ω·x² − (U_n − ΔU_p)·x + R_a·T_E = 0.
 
 **Identificarea parametrilor** pornește de la punctul nominal din catalog (180 kW, 350 Nm) și de la ipotezele din
 [`date/ipoteze_masina.json`](date/ipoteze_masina.json) (fiecare cu sursa):
@@ -131,12 +139,12 @@ Ecuațiile din curs, pentru un motor:
 | Ipoteză | Valoare | Sursa / justificarea |
 |---|---|---|
 | η_n (la P_n, n_n) | 0,96 | YASA: randament de vârf > 96 % (Installation Guide 2021); ORNL: motorul Prius 2010 – 96 % vârf |
-| Împărțirea pierderilor la n_n | Cu 50 % / Fe 35 % / mecanice 15 % | Mahmoudi et al., IEEE TIA 2017, Tab. I (43/30/24 %); Hong et al., Energies 2024 (YASA, Cu 43 %); domeniu plauzibil 40–55 / 30–50 / 10–25 % |
+| Împărțirea pierderilor la n_n | Cu 50 % / Fe 35 % / mecanice 15 % | în domeniul din literatură, 40–55 / 30–50 / 10–25 %: Mahmoudi et al., IEEE TIA 2017, Tab. I (43/30/24 %); Hong et al., Energies 2024 (YASA, Cu 43 %, fier și curenți turbionari 48 %) |
 | P_Fe(n_max)/P_Fe(n_n) | 3,0 | tabla NO20 (Tata Hi-Lite NO20-1300H): 2,8–3,0 la inducție constantă (cu slăbire de câmp raportul real este mai mic) |
 | P_fv(n_max)/P_fv(n_n) | 3,5 | rulmenți ∝ n^1,6 (modelul SKF) → 3,1; ventilație ∝ Ω³ (NASA TN D-4849); domeniu 3,1–4,7 |
 | τ_a = L_a/R_a | 8 ms | YASA Y750R: L = 245 µH, R = 25 mΩ → 9,8 ms la 20 °C, ≈ 8 ms cu înfășurarea caldă; τ se păstrează la trecerea PMSM → MCC |
 | J_rotor | 0,2 kg·m² | estimare (YASA nu publică inerția): scalare după EMRAX 228/268 (≈ 0,24, limită superioară) |
-| c (căldura specifică medie) | 500 J/(kg·K) | NIST: Cu 385, Fe ≈ 449, Al ≈ 897; NdFeB 460 (Arnold); repartiția maselor YASA (Taran et al., 2022) + carcasă de aluminiu |
+| c (căldura specifică medie) | 500 J/(kg·K) | NIST: Cu 385, Fe ≈ 449, Al ≈ 897; NdFeB 460 (Arnold); repartiția maselor YASA (Taran et al., 2022) + carcasă de aluminiu → 515–580; ales acoperitor 500 |
 
 <!-- AUTO:parametri -->
 | Parametru | Valoare | Relația |
@@ -156,7 +164,7 @@ Ecuațiile din curs, pentru un motor:
 <!-- /AUTO:parametri -->
 
 Pornirea (C3, IV): la tensiunea nominală curentul de pornire ar fi I_p = U_n/R_a ≈ 11 700 A, deci pornirea se face
-la tensiune redusă (convertorul): **U_p = R_a·I_max ≈ 32 V** limitează curentul la I_max.
+la tensiune redusă, dată de convertor: **U_p = R_a·I_max ≈ 32 V** limitează curentul la I_max.
 
 ## 5. Diagrama de puteri în punctele caracteristice
 
@@ -171,12 +179,10 @@ la tensiune redusă (convertorul): **U_p = R_a·I_max ≈ 32 V** limitează cure
 | 6 | 50 km/h, viteză constantă (P3) | 1 573 | 10,7 | 1,000 | 251,7 | 10,1 | 2,54 | 0,007 | 0,580 | 0,190 | 1,77 | 69,44 |
 <!-- /AUTO:puncte -->
 
-![Pierderile în punctele caracteristice](figuri/c3_pierderi_puncte.png)
+<!-- AUTO:puncte_text -->
+<!-- /AUTO:puncte_text -->
 
-La sarcină mică (rulare cu 50 sau 100 km/h, 10–17 Nm pe motor) pierderile în fier și mecanice (care nu depind de cuplu)
-domină, iar randamentul scade la 70–75 %: cu 3 motoare de 180 kW pentru ~6 kW la roți, acționarea este
-supradimensionată la viteză constantă. În practică, la viteză mică se poate folosi un singur motor (sau decupla puntea
-față), ceea ce mărește randamentul în acest regim.
+![Pierderile în punctele caracteristice](figuri/c3_pierderi_puncte.png)
 
 ## 6. Harta de randament (C3, exercițiul 1)
 
@@ -189,7 +195,7 @@ Randamentul maxim al modelului: **η_max = 96,00 %** la n = 4 917 rot/min, T_ax 
 ## 7. Caracteristicile mecanice n = f(T_ax)
 
 Reglarea vitezei prin tensiune (cu flux plin, sub viteza de bază) și prin slăbirea câmpului (la U_n, peste viteza de
-bază), după n = (U − ΔU_p)/(k_E·Φ) − R_a·I/(k_E·Φ) (C3, III):
+bază), după Ω = (U − ΔU_p)/(k_E·Φ) − R_a·I/(k_E·Φ), n = 30·Ω/π (C3, III):
 
 ![Caracteristici mecanice](figuri/c3_caracteristici_mecanice.png)
 
@@ -208,9 +214,8 @@ Un motor: m = 33 kg, c = 500 J/(kg·K) → m·c = 16 500 J/K (fără răcire).
 | Ciclul P3, palier 50 km/h (1 573 rot/min, 10,7 Nm) | 777 W (η = 69,4 %) | 11,14 h | 31,2 MJ | 1 889 K (fără răcire) |
 <!-- /AUTO:incalzire -->
 
-Pierderile la rulare continuă cu v_max (≈ 13 kW pe motor) trebuie evacuate permanent de răcirea cu ulei; vârful de
-30 s din catalog încălzește motorul cu ≈ 33 K fără răcire, ceea ce se încadrează în limitele YASA (înfășurare 140–150 °C,
-rotor 90–100 °C, cu ulei la intrare ≈ 65 °C).
+Limitele de temperatură date de YASA (Installation Guide 2021, sec. 8.4–8.5): reducerea cuplului începe la 140 °C în
+înfășurare, 100 °C în miezul statorului și 90 °C în rotor; temperatura tipică a uleiului la intrare este 65 °C.
 
 ## 9. Simulările mașinii (C3, exercițiul 2)
 
@@ -230,15 +235,16 @@ Toate simulările folosesc același integrator Runge-Kutta 4 cu pas fix (`rk4.m`
 ![Simularea B](figuri/sim_B_accelerare.png)
 ![Simularea D](figuri/sim_D_rampa.png)
 
-Simularea B confirmă dimensionarea: cu cuplul limitat de aderență (ca în P2) vehiculul accelerează 0–100 km/h în
-≈ 3,7 s (P2: 3,66 s; diferența vine din inerția rotoarelor și din pierderile de cuplu), iar cu slăbirea câmpului
-atinge v_max. Scenariul D (rampă de tensiune) este refăcut în Simulink, cu aceleași valori.
+<!-- AUTO:simulari_text -->
+<!-- /AUTO:simulari_text -->
 
 ## 10. Simularea pe ansamblu (P4, slide 4)
 
 Baterie → DC-DC → 3 invertoare → 3 motoare → reductoare → roți, pe ciclul P3 scurtat, cu reglare în cascadă
-(viteză → cuplu → curent) și frânare recuperativă. Convertoarele sunt reprezentate aici prin randamente (modele medii);
-cu comutație ele sunt simulate în [`../etapa4-convertoare`](../etapa4-convertoare) și în Simulink.
+(viteză → cuplu → curent) și frânare recuperativă. Convertoarele sunt reprezentate aici prin randamente constante (modele
+medii). Cu comutație, DC-DC-ul și încărcătorul sunt simulate în [`../etapa4-convertoare`](../etapa4-convertoare);
+chopperul (invertorul echivalent) și ansamblul cu comutație există ca modele Simulink ([`../simulink`](../simulink)),
+încă nerulate în MATLAB.
 
 <!-- AUTO:ansamblu -->
 Ciclul P3 scurtat: 0 → 50 km/h în 1,81 s (a = 7,69 m/s²), palier 5 s, frânare simetrică, oprire 1 s. Regulator de viteză PI cu poli dubli la −10 rad/s (K_p = 115,7 Nm·s/rad, K_i = 578,5 Nm/rad); eroarea maximă de viteză 2,16 km/h.
@@ -254,10 +260,8 @@ Energia luată din baterie pe ciclu: **168,4 kJ**; estimarea P3 (η = 0,8) pe ac
 
 ![Simularea pe ansamblu](figuri/sim_C_ansamblu.png)
 
-**Confirmarea bateriei pe ciclu:** P3 a folosit un randament global η = 0,8 atât la tracțiune, cât și la recuperare.
-Simularea arată un randament mai mare la accelerare, dar mai mic la viteză constantă (sarcina este foarte mică pentru
-3 motoare, § 5). Pe faza lungă de 50 km/h a ciclului P3, energia reală ar fi deci mai mare decât estimarea P3;
-rezerva de 30 % a bateriei acoperă diferența, iar folosirea unui singur motor la viteză constantă ar elimina-o.
+<!-- AUTO:baterie_ciclu -->
+<!-- /AUTO:baterie_ciclu -->
 
 ## 11. Modelele Simulink
 
@@ -272,3 +276,12 @@ convertoarele și sistemul complet se construiesc automat cu scripturile din [`.
   măsurători pe YM720 (fișa completă YASA este disponibilă doar la cerere).
 - Pierderile în fier se consideră independente de flux (forma K_H·Ω + K_F·Ω² din curs); cu slăbirea câmpului ele ar fi
   mai mici la viteze mari, deci randamentele calculate peste n_b sunt acoperitoare.
+- Simulările împart cuplul egal între motoare (fiecare antrenează 1/3 din vehicul); inerția vehiculului raportată la ax
+  nu include randamentul reductorului, iar inerția roților este neglijată (≈ 2 %).
+- Convertoarele au randamente constante în modelul de ansamblu (pierderile la sarcină mică și la turație zero nu sunt
+  modelate), deci randamentul la 50 km/h este o limită superioară.
+- Curenții echivalentului MCC (de exemplu I_max ≈ 464 A) nu sunt curenții de fază ai invertorului trifazat real
+  (≈ 700 A vârf la 350 kW); ondulația curentului calculată cu L_a = τ_a·R_a este și ea mai mică decât în mașina reală.
+- La v_max t.e.m. corespunzătoare fluxului nominal ar fi ≈ 2·U_dc: la o oprire a invertorului la viteză mare este nevoie
+  de o protecție (de exemplu scurtcircuit activ al înfășurărilor), ca tensiunea indusă să nu depășească tensiunea
+  tranzistoarelor.

@@ -11,6 +11,7 @@ P.R = M.R_a;  P.L = M.L_a;  P.k = M.k;  P.dUp = M.dU_p;
 P.Tf0 = M.T_f0;  P.Fv = M.F_v;  P.W_b = M.W_b;  P.U_n = M.U_n;
 P.U_min = 0;                 % tensiunea minimă dată de regulatorul de curent (0: un singur sens)
 P.M_treapta = 0;  P.t_treapta = inf;   % treaptă de cuplu de sarcină (folosită în scenariul A)
+P.T_rec = inf;               % cuplul de frânare electric maxim (restul: frâna mecanică), modul 'viteza'
 switch scenariu
     case 'gol'
         P.J = M.J_rotor;  P.a0 = 0;  P.a2 = 0;

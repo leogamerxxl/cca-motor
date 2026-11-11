@@ -12,7 +12,9 @@ function [dx, y] = derivata_mcc(t, x, P)
 %                                      (limitat la ±P.Tlim_fun(W); fără cuplu de frânare la W = 0),
 %                                      urmat de regulatorul PI de curent.
 %   Tensiunea dată de regulatorul de curent este limitată la [P.U_min, P.U_n].
-%   y – mărimi de ieșire: [U, phi, T_E, T_ax, T_sarcina, I_ref].
+%   La frânare (modul 'viteza') mașina dă cel mult P.T_rec (limitele motoarelor și ale aderenței pe punți);
+%   restul cuplului de frânare cerut, T_fm <= 0, este dat de frâna mecanică:  J*dW/dt = T_ax + T_fm - T_sarcina.
+%   y – mărimi de ieșire: [U, phi, T_E, T_ax, T_sarcina, I_ref, T_fm].
 
 I = x(1);  W = x(2);  z = x(3);  zw = x(4);
 if P.slabire && W > P.W_b
@@ -20,7 +22,7 @@ if P.slabire && W > P.W_b
 else
     phi = 1;
 end
-dz = 0;  dzw = 0;  Iref = NaN;
+dz = 0;  dzw = 0;  Iref = NaN;  T_fm = 0;
 switch P.mod
     case 'tensiune'
         U = P.U_fun(t);
@@ -36,7 +38,9 @@ switch P.mod
             if Tu == Tref || (Tu > Tl && ew < 0) || (Tu < -Tl_fr && ew > 0)
                 dzw = ew;                % anti-windup pentru regulatorul de viteză
             end
-            Iref = (Tref + P.Tf0 * sign(W) + P.Fv * W) / (P.k * phi);   % compensarea pierderilor de cuplu
+            T_el = max(Tref, -P.T_rec);             % partea electrică (recuperativă) a cuplului de frânare
+            T_fm = Tref - T_el;                     % restul: frâna mecanică
+            Iref = (T_el + P.Tf0 * sign(W) + P.Fv * W) / (P.k * phi);   % compensarea pierderilor de cuplu
         end
         e = Iref - I;
         u = P.Kp * e + P.Ki * z;
@@ -51,10 +55,10 @@ T_E  = P.k * phi * I;
 T_ax = T_E - P.Tf0 * sign(W) - P.Fv * W;
 T_s  = P.a0 * sign(W) + P.a2 * W^2 + P.M_treapta * (t >= P.t_treapta);
 dI = (U - P.R * I - P.dUp * sign(I) - P.k * phi * W) / P.L;
-dW = (T_ax - T_s) / P.J;
+dW = (T_ax + T_fm - T_s) / P.J;
 if W <= 0 && dW < 0
     dW = 0;                          % vehiculul nu se deplasează înapoi
 end
 dx = [dI; dW; dz; dzw];
-y  = [U, phi, T_E, T_ax, T_s, Iref];
+y  = [U, phi, T_E, T_ax, T_s, Iref, T_fm];
 end

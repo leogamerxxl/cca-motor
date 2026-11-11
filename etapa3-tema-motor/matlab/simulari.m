@@ -3,7 +3,8 @@ function Z = simulari(S, M, T)
 %   A – pornire în gol la tensiunea U_p care limitează curentul de pornire la I_max (C3, IV), apoi
 %       treaptă de cuplu de sarcină (ca în exemplul de curs MCC_CCA.slx)
 %   B – accelerarea vehiculului cu regulator PI de curent și slăbire de câmp; cuplul cerut este
-%       limitat de aderență (ca în P2) și de puterea maximă a motorului; se oprește la v_max
+%       limitat de aderență (ca în P2), de M_max și de puterea sistemului (P_max din P2 împărțit la
+%       N motoare – bateria și DC-DC-ul sunt dimensionate pentru ea); se oprește la v_max
 %   D – tensiune în rampă (fără regulator) cu sarcina vehiculului – scenariul refăcut în Simulink;
 %       durata se alege astfel încât turația să rămână sub n_max
 %   (C – ciclul de viteză al întregului sistem – este în SIMULARE_ANSAMBLU)
@@ -32,7 +33,7 @@ wc = 2 * pi * sim.B_fc_Hz;                  % banda regulatorului de curent
 P.Kp = P.L * wc;  P.Ki = P.R * wc;          % compensarea polului electric (L/R)
 T_ad = S.R2.Fa * r / (N * k_rd * T.eta_rd); % cuplul pe motor care folosește toată aderența
 P.T_ad = T_ad;
-P.Iref_fun = @(W, phi) (min([T_ad, M.M_max, M.P_max / max(W, 1e-6)]) + M.T_f0 + M.F_v * W) / (M.k * phi);
+P.Iref_fun = @(W, phi) (min([T_ad, M.M_max, T.P_lim_motor / max(W, 1e-6)]) + M.T_f0 + M.F_v * W) / (M.k * phi);
 W_vmax = S.V.vmax * k_rd / r;
 [t, X, Y] = rk4(P, sim.B_t_end, sim.B_dt, [0; 0; 0; 0], sim.B_salvare, @(x) x(2) >= W_vmax);
 v = X(:, 2) * r / k_rd;                      % viteza vehiculului [m/s]

@@ -25,6 +25,8 @@ D.P_bat_max = D.P_dc_max / cv.eta_dcdc_ipoteza;      % puterea cerută bateriei
 D.D_max = 1 - D.U_bat_min / D.U_dc;
 D.D_min = 1 - D.U_bat_max / D.U_dc;
 D.D_nom = 1 - D.U_bat_nom / D.U_dc;
+D.U_trecere = cv.U_trecere_rel * D.U_dc;            % peste această tensiune: trecere directă (fără reglare)
+D.D_min_regl = 1 - cv.U_trecere_rel;                % factorul de umplere minim în regim de reglare
 
 % curenți (caz defavorabil: baterie descărcată, U_bat = U_min)
 D.I_bat_max = D.P_bat_max / D.U_bat_min;

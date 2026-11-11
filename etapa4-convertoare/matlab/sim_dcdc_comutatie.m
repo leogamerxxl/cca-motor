@@ -4,8 +4,8 @@ function R = sim_dcdc_comutatie(D, sc)
 %   comandă complementară, deci conducție continuă în ambele sensuri (tracțiune și recuperare):
 %     L di_k/dt = U_bat - (1 - s_k) * u_dc,      C du_dc/dt = sum((1 - s_k) * i_k) - i_sarcina
 %     U_bat = U_0 - R_bat * sum(i_k)
-%   Sarcina (cele 3 invertoare): putere constantă P(t) = 0 -> P_dc_max (tracțiune) -> -P_franare (recuperare),
-%   i_sarcina = P(t) / u_dc.
+%   Sarcina (cele 3 invertoare): putere P(t) = 0 -> P_dc_max (tracțiune) -> -P_franare (recuperare), cu
+%   pante de durată t_rampa (cuplul motoarelor nu se schimbă instantaneu), i_sarcina = P(t) / u_dc.
 %   Reglare în cascadă (ca în exemplul de curs Boost_Model): PI de tensiune -> curentul total de referință
 %   (cu compensarea puterii sarcinii) -> PI de curent pe fiecare fază -> factorul de umplere
 %     d_k = 1 - (U_bat - v_k) / u_dc,   v_k = PI_i(i_ref/N - i_k)   (tensiunea dorită pe bobină)
@@ -30,8 +30,12 @@ for k = 1:n
     tk = (k - 1) * dt;
     if tk < sc.t_tractiune
         P = 0;
+    elseif tk < sc.t_tractiune + sc.t_rampa
+        P = D.P_dc_max * (tk - sc.t_tractiune) / sc.t_rampa;
     elseif tk < sc.t_franare
         P = D.P_dc_max;
+    elseif tk < sc.t_franare + sc.t_rampa
+        P = D.P_dc_max - (1 + sc.P_franare_rel) * D.P_dc_max * (tk - sc.t_franare) / sc.t_rampa;
     else
         P = -sc.P_franare_rel * D.P_dc_max;
     end

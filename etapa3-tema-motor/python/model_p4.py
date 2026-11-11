@@ -157,6 +157,25 @@ def tema_proiect(S, M):
     T["f_fata"] = f_fata
     T["M_nec_fata"] = f_fata * T["M_nec_max"]
     T["M_nec_spate"] = (1 - f_fata) * T["M_nec_max"] / 2
+    T["P_lim_motor"] = min(M["P_max"], T["P_nec_max"] / N)
+    W_Va, W_vm = T["n_m_Va"] / RPM, T["n_m_vmax"] / RPM
+    T["Mm_max_nec"] = T["P_nec_max"] / (N * W_Va)
+    L = punct_functionare(M, [W_Va, W_vm], [T["Mm_max_nec"], T["M_nec_n"] / N])
+    T["Pm_max_nec"], T["Im_max_nec"], T["nm_max_nec"] = T["P_nec_max"] / N, float(L["I"][0]), T["n_m_Va"]
+    T["Pm_n_nec"], T["Im_n_nec"], T["Mm_n_nec"] = T["P_nec_n"] / N, float(L["I"][1]), T["M_nec_n"] / N
+    C2, R3 = S["C2"], S["R3"]
+    a_fr = R3["a"]
+    FzMg = S["V"]["M"] * C2["g"]
+    T["a_fr"] = a_fr
+    T["f_fata_fr"] = ip["repartitie_statica_fata"] + a_fr / C2["g"] * ip["h_L"]
+    F_motor = M["M_max"] * T["k_rd"] / C2["r"]
+    T["F_fata_fr"] = min(C2["mu_a"] * T["f_fata_fr"] * FzMg, 1 * F_motor)
+    T["F_spate_fr"] = min(C2["mu_a"] * (1 - T["f_fata_fr"]) * FzMg, 2 * F_motor)
+    T["F_rec_max"] = T["F_fata_fr"] + T["F_spate_fr"]
+    T["F_fr_nec"] = S["V"]["M"] * a_fr - R3["Ff"] - R3["Fra_V1"]
+    T["cota_rec"] = min(1.0, T["F_rec_max"] / T["F_fr_nec"])
+    T["ok_frana"] = T["F_rec_max"] + 1e-9 >= T["F_fr_nec"]
+    T["T_rec_max"] = T["F_rec_max"] * C2["r"] * T["eta_rd"] / (N * T["k_rd"])
     T["N"] = N
     T["ME_P_n"], T["ME_P_max"] = M["P_n"], M["P_max"]
     T["ME_M_n"], T["ME_M_max"] = M["M_n"], M["M_max"]
@@ -192,7 +211,7 @@ def parametri_model(S, M, T, scenariu):
     C2, V = S["C2"], S["V"]
     N, k_rd, r = T["N"], T["k_rd"], C2["r"]
     P = dict(R=M["R_a"], L=M["L_a"], k=M["k"], dUp=M["dU_p"], Tf0=M["T_f0"], Fv=M["F_v"], W_b=M["W_b"],
-             U_n=M["U_n"], U_min=0.0, M_treapta=0.0, t_treapta=math.inf)
+             U_n=M["U_n"], U_min=0.0, M_treapta=0.0, t_treapta=math.inf, T_rec=math.inf)
     if scenariu == "gol":
         P.update(J=M["J_rotor"], a0=0.0, a2=0.0)
     elif scenariu == "vehicul":
@@ -213,6 +232,7 @@ def derivata_mcc(t, x, P):
     dz = 0.0
     dzw = 0.0
     Iref = math.nan
+    T_fm = 0.0
     mod = P["mod"]
     if mod == "tensiune":
         U = P["U_fun"](t)
@@ -227,7 +247,9 @@ def derivata_mcc(t, x, P):
             Tref = min(max(Tu, -Tl_fr), Tl)
             if Tu == Tref or (Tu > Tl and ew < 0) or (Tu < -Tl_fr and ew > 0):
                 dzw = ew
-            Iref = (Tref + P["Tf0"] * sgn(W) + P["Fv"] * W) / (P["k"] * phi)
+            T_el = max(Tref, -P["T_rec"])
+            T_fm = Tref - T_el
+            Iref = (T_el + P["Tf0"] * sgn(W) + P["Fv"] * W) / (P["k"] * phi)
         e = Iref - I
         u = P["Kp"] * e + P["Ki"] * z
         U = min(max(u, P["U_min"]), P["U_n"])
@@ -239,10 +261,10 @@ def derivata_mcc(t, x, P):
     T_ax = T_E - P["Tf0"] * sgn(W) - P["Fv"] * W
     T_s = P["a0"] * sgn(W) + P["a2"] * W ** 2 + P["M_treapta"] * (t >= P["t_treapta"])
     dI = (U - P["R"] * I - P["dUp"] * sgn(I) - P["k"] * phi * W) / P["L"]
-    dW = (T_ax - T_s) / P["J"]
+    dW = (T_ax + T_fm - T_s) / P["J"]
     if W <= 0 and dW < 0:
         dW = 0.0
-    return [dI, dW, dz, dzw], [U, phi, T_E, T_ax, T_s, Iref]
+    return [dI, dW, dz, dzw], [U, phi, T_E, T_ax, T_s, Iref, T_fm]
 
 
 # ---------------------------------------------------------------- rk4.m
@@ -306,7 +328,7 @@ def simulari(S, M, T):
     P["Kp"] = P["L"] * wc
     P["Ki"] = P["R"] * wc
     T_ad = S["R2"]["Fa"] * r / (N * k_rd * T["eta_rd"])
-    P["Iref_fun"] = lambda W, phi: (min([T_ad, M["M_max"], M["P_max"] / max(W, 1e-6)]) + M["T_f0"]
+    P["Iref_fun"] = lambda W, phi: (min([T_ad, M["M_max"], T["P_lim_motor"] / max(W, 1e-6)]) + M["T_f0"]
                                     + M["F_v"] * W) / (M["k"] * phi)
     W_vmax = S["V"]["vmax"] * k_rd / r
     t, X, Y = rk4(P, sim["B_t_end"], sim["B_dt"], [0, 0, 0, 0], sim["B_salvare"], lambda x: x[1] >= W_vmax)
@@ -350,12 +372,13 @@ def simulare_ansamblu(S, M, T):
     P["Kp_w"] = 2 * zeta * wn * P["J"]
     P["Ki_w"] = wn ** 2 * P["J"]
     T_ad = S["R2"]["Fa"] * r / (N * k_rd * T["eta_rd"])
-    P["Tlim_fun"] = lambda W: min([T_ad, M["M_max"], M["P_max"] / max(W, 1e-6)])
+    P["Tlim_fun"] = lambda W: min([T_ad, M["M_max"], T["P_lim_motor"] / max(W, 1e-6)])
+    P["T_rec"] = T["T_rec_max"]
     P["Wref_fun"] = lambda t: float(v_ref(t)) * k_rd / r
     C.update(Kp_w=P["Kp_w"], Ki_w=P["Ki_w"], J=P["J"], T_ad=T_ad)
     t, X, Y = rk4(P, t_end, c["C_dt"], [0, 0, 0, 0], c["C_salvare"])
     C.update(t=t, I=X[:, 0], W=X[:, 1], v=X[:, 1] * r / k_rd, v_ref=v_ref(t), U=Y[:, 0], phi=Y[:, 1],
-             T_ax=Y[:, 3], I_ref=Y[:, 5])
+             T_ax=Y[:, 3], I_ref=Y[:, 5], T_fm=Y[:, 6])
     C["eroare_v_max"] = float(np.max(np.abs(C["v"] - C["v_ref"])))
     C["P_ax"] = N * C["T_ax"] * C["W"]
     C["P_el"] = N * C["U"] * C["I"]
@@ -372,11 +395,19 @@ def simulare_ansamblu(S, M, T):
     C["U_bat_min"] = float(C["U_bat"].min())
     C["D_max"] = 1 - C["U_bat_min"] / T["U_conv"]
     C["P_bat_max"] = float(C["P_bat"].max())
+    V, C2 = S["V"], S["C2"]
+    Ff = C2["mu_f"] * V["M"] * C2["g"]
+    C["P_fm"] = N * C["T_fm"] * C["W"]
+    C["P_rez"] = (Ff * np.sign(C["v"]) + 0.5 * C2["rho"] * V["S"] * V["Cx"] * C["v"] ** 2) * C["v"]
+    k1 = np.nonzero(C["v"] >= (1 - 1e-3) * V1)[0]
+    C["t_acc"] = float(t[k1[0]]) if k1.size else t1
     C["E"] = {}
-    for nume, ta, tb in (("acc", 0, t1), ("palier", t1, t2), ("franare", t2, t3 + c["C_t_oprire"])):
+    for nume, ta, tb in (("acc", 0, C["t_acc"]), ("palier", C["t_acc"], t2), ("franare", t2, t_end)):
         m = (t >= ta - 1e-12) & (t <= tb + 1e-12)
-        C["E"][nume] = dict(ax=trapz(t[m], C["P_ax"][m]), el=trapz(t[m], C["P_el"][m]),
-                            dc=trapz(t[m], C["P_dc"][m]), bat=trapz(t[m], C["P_chim"][m]))
+        ti, vi = t[m], C["v"][m]
+        C["E"][nume] = dict(ax=trapz(ti, C["P_ax"][m]), el=trapz(ti, C["P_el"][m]),
+                            dc=trapz(ti, C["P_dc"][m]), bat=trapz(ti, C["P_chim"][m]), fm=trapz(ti, C["P_fm"][m]),
+                            roata=0.5 * V["M"] * (vi[-1] ** 2 - vi[0] ** 2) + trapz(ti, C["P_rez"][m]))
     E = C["E"]
     E["total_bat"] = E["acc"]["bat"] + E["palier"]["bat"] + E["franare"]["bat"]
     E["total_ax"] = E["acc"]["ax"] + E["palier"]["ax"] + E["franare"]["ax"]
@@ -385,10 +416,36 @@ def simulare_ansamblu(S, M, T):
     eta = S["C2"]["eta"]
     C["P3"] = dict(W01=R3["W01_exact"], W12=R3["P1p"] * c["C_t_palier"], W2f=R3["W01_exact"])
     C["P3"]["W_stocata"] = C["P3"]["W01"] / eta + C["P3"]["W12"] / eta - eta * C["P3"]["W2f"]
-    C["eta_acc"] = E["acc"]["ax"] / E["acc"]["bat"]
-    C["eta_pal"] = E["palier"]["ax"] / E["palier"]["bat"]
-    C["eta_rec"] = E["franare"]["bat"] / E["franare"]["ax"]
+    C["eta_acc"] = E["acc"]["roata"] / E["acc"]["bat"]
+    C["eta_pal"] = E["palier"]["roata"] / E["palier"]["bat"]
+    C["eta_rec"] = E["franare"]["bat"] / E["franare"]["roata"]
+    C["cota_fm"] = E["franare"]["fm"] / (E["franare"]["fm"] + E["franare"]["ax"])
+    m = (t >= t1 + 0.5 * c["C_t_palier"]) & (t <= t2)
+    C["P_bat_palier"] = float(np.mean(C["P_chim"][m]))
+    C["eta_pal_stabil"] = R3["P1p"] / C["P_bat_palier"]
+    C["P3"]["W_stocata_sim"] = R3["W01"] / C["eta_acc"] + R3["W12"] / C["eta_pal_stabil"] - C["eta_rec"] * R3["W2f"]
+    C["P3"]["W_bat_sim"] = C["P3"]["W_stocata_sim"] / (1 - S["C2"]["rezerva"])
+    C["P3"]["rezerva_sim"] = 1 - C["P3"]["W_stocata_sim"] / B["W_real"]
+    C["palier"] = eficienta_palier(S, M, T, [3, 2, 1], C["eta_acc"], C["eta_rec"])
     return C
+
+
+def eficienta_palier(S, M, T, N_activ, eta_acc, eta_rec):
+    R3, r, ip, B, cel = S["R3"], S["C2"]["r"], S["ip"], S["B"], S["cel"]
+    R_bat = B["Ns"] * cel["R_dc_mOhm"] * 1e-3 / B["Np"]
+    U0 = B["U_nom"]
+    W = R3["V1"] / r * T["k_rd"]
+    out = []
+    for n in N_activ:
+        Tm = R3["Ft1p"] * r / (n * T["k_rd"] * T["eta_rd"])
+        L = scalar(punct_functionare(M, W, Tm))
+        P_bat = n * L["P1"] / ip["eta_invertor"] / ip["eta_dcdc"]
+        I = (U0 - math.sqrt(U0 ** 2 - 4 * R_bat * P_bat)) / (2 * R_bat)
+        e = R3["P1p"] / (U0 * I)
+        Ws = R3["W01"] / eta_acc + R3["W12"] / e - eta_rec * R3["W2f"]
+        out.append(dict(N_activ=n, T_motor=Tm, eta_motor=L["eta"], P_bat=U0 * I, eta=e, W_stocata=Ws,
+                        rezerva=1 - Ws / B["W_real"]))
+    return out
 
 
 # ---------------------------------------------------------------- incalzire.m

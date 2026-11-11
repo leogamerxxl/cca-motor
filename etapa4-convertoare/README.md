@@ -9,10 +9,23 @@ reglare prin histerezis. Pentru sistemul de propulsie din etapa 3 acestea devin:
 |---|---|---|
 | Baterie ↔ circuitul intermediar | **DC-DC bidirecțional** (semipunte pe fază, 4 faze intercalate): **ridicător** la tracțiune, **coborâtor** la frânarea recuperativă | U_bat = 475–798 V, U_conv = 800 V constant pentru motoare; aceeași semipunte lucrează în ambele sensuri, deci „convertorul de frânare recuperativă” din schema de curs nu mai este un bloc separat |
 | Invertorul fiecărui motor | **chopper în 4 cadrane (punte H)** – echivalentul MCC al invertorului trifazat | modelul MCC al mașinii din etapa 3 |
-| Încărcătorul | redresor trifazat cu **PFC** (U_dc = 880 V) + **coborâtor** cu reglare de curent prin **histerezis** și regulator de tensiune: încărcare **CC-CV** | ca în exemplul din suport (slide 3); U_dc > U_CV = 798 V |
+| Încărcătorul | redresor trifazat cu **PFC** (U_PFC = 880 V) + **coborâtor** cu reglare de curent prin **histerezis** și regulator de tensiune: încărcare **CC-CV** | ca în exemplul din suport (slide 3); U_PFC > U_CV = 798 V |
 
-Peste U_bat > 0,95·U_dc (baterie aproape plină) ridicătorul nu mai are rezervă de reglare și trece în regim de
-„trecere directă” (tranzistorul superior închis permanent, U_dc ≈ U_bat ≤ 798 V, în domeniul motoarelor 400–800 V).
+**Limitele de tensiune.** Tensiunea maximă a bateriei (798 V) este aproape egală cu U_conv = 800 V, care este și limita
+superioară a domeniului de aplicare al motoarelor YASA (400–800 V). De aceea:
+
+- la tracțiune, când U_bat > 0,95·U_conv = 760 V (baterie aproape plină), ridicătorul nu mai are rezervă de reglare și
+  trece în regim de „trecere directă” (tranzistorul superior conduce permanent): U_dc este tensiunea la bornele bateriei,
+  mai mică decât OCV ≤ 798 V, deci în domeniul motoarelor; în regim de reglare D ≥ 0,05;
+- la frânare, cu bateria aproape plină, tensiunea la borne ar crește peste 800 V (OCV + R_bat·I): curentul de recuperare
+  se limitează astfel încât U_bat ≤ 800 V (ca în vehiculele reale, frânarea recuperativă este redusă la încărcare
+  completă), iar restul frânării îl preia frâna mecanică;
+- coborâtorul-ridicătorul (buck-boost) din suport nu este necesar: tensiunea bateriei rămâne sub U_conv, deci la
+  tracțiune tensiunea doar se ridică, iar la frânare doar se coboară. Alternativa ar fi o baterie cu mai puține celule în
+  serie (de exemplu 180s, ≈ 756 V la încărcare completă), cu rezervă de tensiune, dar cu altă dimensionare în P3.
+
+Etajul PFC al încărcătorului nu este simulat: este reprezentat printr-o sursă de c.c. de 880 V cu η_PFC = 0,985
+(Wolfspeed CRD-22AD12N).
 
 ## Fișiere
 
@@ -69,15 +82,20 @@ Componentele: modulul SiC **Wolfspeed CAB760M12HM3** (1200 V, 765 A la T_C = 90 
 E_on/E_off = 23,7/17,8 mJ la 600 V/760 A – fișa tehnică Rev. 5, p. 1–2) și condensatoare de circuit intermediar
 **TDK B32778J0207K000** (MKP, 200 µF, 1100 V, 66 A). Frecvența de comutație de 20 kHz este o alegere de proiectare
 (Wolfspeed CRD-60DD12N, un ridicător SiC intercalat 470–800 V → 850 V, lucrează la 78 kHz cu componente discrete).
-Pierderile calculate (0,5 %) cuprind doar tranzistoarele; cu bobinele și condensatoarele randamentul real este mai mic,
-de aceea în calcule s-a păstrat ipoteza η_DC-DC = 98 % (Ni et al., IEEE TPEL 2020: 97,4 % la 100 kW).
+Pierderile calculate (0,5 %) cuprind doar tranzistoarele, cu energiile de comutație scalate liniar cu tensiunea (în
+realitate ≈ U^1,3–1,5); cu bobinele și condensatoarele randamentul real este mai mic, de aceea în calcule s-a păstrat
+ipoteza η_DC-DC = 98 %, între randamentul de vârf al unui ridicător SiC intercalat (99,5 %, Wolfspeed CRD-60DD12N) și cel
+al unui convertor SiC de 100 kW (97,4 %, Ni et al., IEEE TPEL 2020 – convertor cu condensatoare comutate).
+
+Curentul maxim al bateriei (≈ 1 200 A, ≈ 39 A/celulă) este calculat aici cu randamentele motorului (harta C3),
+invertorului și DC-DC-ului; în P3 și în confirmările etapei 3 s-a folosit randamentul global η = 0,8, care dă 1 365 A
+(44,0 A/celulă). Ambele valori sunt sub limita celulelor (31 × 60 A = 1 860 A).
 
 ![DC-DC bidirecțional](figuri/p5_dcdc_comutatie.png)
 ![Intercalarea fazelor](figuri/p5_dcdc_intercalare.png)
 
-Cele 4 faze defazate cu T_s/4 își compensează ondulațiile: curentul bateriei are o ondulație de ~7 ori mai mică decât
-cea a unei faze, iar ondulația tensiunii circuitului intermediar este mult sub cele 8 V ale calculului acoperitor
-cu o singură fază.
+<!-- AUTO:dcdc_text -->
+<!-- /AUTO:dcdc_text -->
 
 ## 2. Chopperul în 4 cadrane (invertorul echivalent)
 
@@ -112,8 +130,10 @@ Inductivitatea echivalentă L_a = τ_a·R_a (etapa 3) face ca ondulația curentu
 <!-- /AUTO:incarcator -->
 
 - Încărcarea standard a celulei P50B este CC-CV la 4,2 V, 5 A (1C), maxim 25 A (5C) (fișa Molicel); încărcătorul de
-  bord de 22 kW (front-end activ trifazat tip Wolfspeed CRD-22AD12N, 650–900 V c.c.) dă doar 0,17C, deci 5,3 h pentru
-  10 → 100 %. Încărcarea rapidă în c.c. (de exemplu 320 kW la stațiile de 800 V, Porsche Taycan) ar ocoli încărcătorul.
+  bord de 22 kW (redresor activ trifazat cu PFC, tip Wolfspeed CRD-22AD12N, 650–900 V c.c.) dă doar 0,17C, deci
+  ≈ 5,3 h pentru 10 → 100 %. Încărcarea rapidă în c.c. (de exemplu până la 320 kW la stațiile de 800 V, Porsche Taycan –
+  Porsche Newsroom) ar ocoli încărcătorul. Cu reglare la putere constantă în locul curentului constant încărcarea ar
+  fi mai scurtă (curentul ar putea fi mai mare la tensiune mică).
 - În realitate etajul DC-DC al încărcătorului este izolat (rezonant CLLC); aici este simplificat la coborâtorul
   neizolat din exemplul de curs.
 - Modelul bateriei: rezistența internă (12,8 mΩ/celulă, fișa Molicel) și o tensiune de mers în gol liniară în SOC,
@@ -147,8 +167,11 @@ mediu urmează totuși referința, iar încărcarea se oprește la 50 mA/celulă
 
 ## 5. Observații
 
-- Treptele de sarcină de 565 kW (0 → tracțiune) și 845 kW (tracțiune → recuperare) sunt cazuri extreme (în realitate
-  cuplul crește cu o pantă); tensiunea circuitului intermediar rămâne în ±8 %.
-- Ripplul calculat al condensatorului (o fază echivalentă) este acoperitor; condensatoarele invertoarelor (400–600 µF
-  pentru 300 kW, TDK xEVCap) sunt în paralel pe același circuit intermediar.
+- Simularea DC-DC-ului este făcută la U_bat = 684 V (nominal); cazul cel mai greu pentru curent (475 V) este acoperit de
+  dimensionare, nu de simulare.
+- Ondulația calculată a tensiunii pe condensator (o fază echivalentă) este acoperitoare; criteriul care contează este
+  variația tensiunii la schimbările rapide de sarcină. Condensatoarele invertoarelor (400–600 µF pentru 300 kW, TDK
+  xEVCap) sunt în paralel pe același circuit intermediar.
+- Chopperul în punte H este calculat aici și simulat cu comutație doar în modelul Simulink de ansamblu (încă nerulat);
+  curenții echivalentului MCC nu sunt curenții de fază ai invertorului trifazat real.
 - Datele de catalog folosite sunt în [`date/convertoare.json`](date/convertoare.json), fiecare cu sursa.

@@ -5,7 +5,7 @@ function [t, X, Y] = rk4(P, t_end, dt, x0, pas_salvare, conditie_stop)
 if nargin < 6, conditie_stop = []; end
 n  = round(t_end / dt);
 ns = floor(n / pas_salvare) + 1;
-t  = zeros(ns, 1);  X = zeros(ns, numel(x0));  Y = zeros(ns, 6);
+t  = zeros(ns, 1);  X = zeros(ns, numel(x0));  Y = zeros(ns, 7);
 x  = x0(:);
 [~, y] = derivata_mcc(0, x, P);
 t(1) = 0;  X(1, :) = x.';  Y(1, :) = y;

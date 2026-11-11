@@ -46,14 +46,28 @@ fprintf('Eroarea maximă de urmărire a vitezei: %.3f km/h\n', C.eroare_v_max * 
 fprintf('Baterie: R_bat = %.4f Ohm, U_0 = %.0f V; I_bat = %.0f … %.0f A; U_bat min = %.0f V; I celulă max = %.1f A\n', ...
         C.R_bat, C.U_0, C.I_bat_min, C.I_bat_max, C.U_bat_min, C.I_celula_max);
 fprintf('DC-DC: D max = %.3f; eta_invertor = %.2f, eta_DC-DC = %.2f (ipoteze)\n', C.D_max, S.ip.eta_invertor, S.ip.eta_dcdc);
-fprintf('%-10s %12s %12s %12s %12s %10s\n', 'Faza', 'E_ax [kJ]', 'E_el [kJ]', 'E_dc [kJ]', 'E_bat [kJ]', 'eta lanț');
+fprintf('Fazele după viteza reală: accelerare până la %.2f s\n', C.t_acc);
+fprintf('%-10s %10s %10s %10s %10s %10s %10s %9s\n', 'Faza', 'E_roți', 'E_ax', 'E_el', 'E_dc', 'E_bat', 'E_frâne', 'eta lanț');
 ff = {'acc', 'palier', 'franare'};  eta_f = [C.eta_acc, C.eta_pal, C.eta_rec];
 for q = 1:3
     E = C.E.(ff{q});
-    fprintf('%-10s %12.1f %12.1f %12.1f %12.1f %10.3f\n', ff{q}, E.ax/1e3, E.el/1e3, E.dc/1e3, E.bat/1e3, eta_f(q));
+    fprintf('%-10s %10.1f %10.1f %10.1f %10.1f %10.1f %10.1f %9.3f\n', ff{q}, E.roata/1e3, E.ax/1e3, E.el/1e3, ...
+            E.dc/1e3, E.bat/1e3, E.fm/1e3, eta_f(q));
 end
-fprintf('Energia din baterie pe ciclu: %.1f kJ (P3 cu eta = %.1f: %.1f kJ); dSOC = %.4f %%\n', ...
+fprintf('(energii în kJ; la frânare %.1f %% din energia de frânare la ax trece prin frânele mecanice)\n', 100 * C.cota_fm);
+fprintf('Energia din baterie pe ciclul scurt: %.1f kJ (P3 cu eta = %.1f: %.1f kJ); dSOC = %.4f %%\n', ...
         C.E.total_bat/1e3, S.C2.eta, C.P3.W_stocata/1e3, C.dSOC_pct);
+fprintf('Regim staționar la %.0f km/h: P baterie %.2f kW pentru %.2f kW la roți -> eta = %.3f\n', C.V1*3.6, ...
+        C.P_bat_palier/1e3, S.R3.P1p/1e3, C.eta_pal_stabil);
+fprintf('Ciclul P3 complet cu randamentele simulate: W_stocată = %.1f kWh (P3: %.1f kWh), W_bat necesar = %.1f kWh;\n', ...
+        C.P3.W_stocata_sim/3.6e6, S.R3.Wstocata/3.6e6, C.P3.W_bat_sim/3.6e6);
+fprintf('  bateria instalată (%.1f kWh) acoperă ciclul, rezerva scade la %.1f %% (cerut 30 %%)\n', S.B.W_real/3.6e6, ...
+        100 * C.P3.rezerva_sim);
+fprintf('Palier cu N motoare active (celelalte decuplate):');
+for q = 1:numel(C.palier)
+    fprintf('  N = %d: eta = %.3f, rezervă %.1f %%;', C.palier(q).N_activ, C.palier(q).eta, 100 * C.palier(q).rezerva);
+end
+fprintf('\n');
 fprintf('(durata simulărilor: %.1f s)\n', durata);
 
 if grafice

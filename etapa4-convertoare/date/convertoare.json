@@ -32,7 +32,7 @@
       "I_rms_A": 66,
       "sursa": "TDK, Film Capacitors – Capacitors for DC Link B3277*, p.13 – https://www.tdk-electronics.tdk.com/inf/20/20/db/fc_2009/MKP_B32774_778.pdf"
     },
-    "sursa_eta": "Wolfspeed CRD-60DD12N: 99,5 % (vârf); ipoteza 98,5 % ține cont de puterea mare"
+    "sursa_eta": "Wolfspeed CRD-60DD12N (ridicător SiC intercalat, 99,5 % vârf) și Ni et al., IEEE TPEL 35(6) 2020 (convertor SiC de 100 kW cu condensatoare comutate, 97,4 % la 100 kW); ipoteza 98 % este între ele"
   },
   "chopper": {
     "f_pwm_Hz": 10000,
@@ -83,7 +83,8 @@
         2.97,
         2.5
       ]
-    }
+    },
+    "sursa_DC_rapid": "Porsche Newsroom – Taycan, autonomie și încărcare: până la 320 kW la stațiile de 800 V – https://newsroom.porsche.com/en/press-kits/taycan/Die-Reichweite-und-das-Laden.html"
   },
   "simulare": {
     "dcdc": {
@@ -95,7 +96,8 @@
       "P_franare_rel": 0.5,
       "U_bat_V": 684,
       "fc_I_Hz": 2000,
-      "fc_U_Hz": 200
+      "fc_U_Hz": 200,
+      "t_rampa": 0.002
     },
     "incarcare": {
       "dt": 1e-07,

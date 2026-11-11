@@ -24,7 +24,8 @@ sys.path.insert(0, str(AICI))
 import model_p5p6 as m5  # noqa: E402
 sys.path.insert(0, str(m5.RADACINA.parent / "etapa3-tema-motor" / "python"))
 import calcule_p4 as c4  # noqa: E402
-from calcule_p2_p3 import ro, virgula, actualizeaza_readme  # noqa: E402
+from calcule_p2_p3 import virgula, actualizeaza_readme  # noqa: E402
+ro = c4.ro
 
 RADACINA = m5.RADACINA
 CUL, TEXT, TEXT2 = c4.CUL, c4.TEXT, c4.TEXT2
@@ -160,10 +161,10 @@ def tabele(R, nr=None):
         f"| P în circuitul intermediar | {ro(D['P_dc_max']/1e3, 1)} kW | 3·P1 / η_invertor (η = {ro(cv['dcdc']['eta_invertor'], 3)}) |",
         f"| P cerută bateriei | {ro(D['P_bat_max']/1e3, 1)} kW | / η_DC-DC (ipoteză {ro(cv['dcdc']['eta_dcdc_ipoteza'], 3)}) |",
         f"| U_dc / U_bat | {ro(D['U_dc'], 0)} V / {ro(D['U_bat_min'], 0)}…{ro(D['U_bat_max'], 0)} V (nominal {ro(D['U_bat_nom'], 0)} V) | – |",
-        f"| D ridicător | {ro(D['D_min'], 4)} … {ro(D['D_max'], 4)} (nominal {ro(D['D_nom'], 3)}) | D = 1 − U_bat/U_dc; peste {ro(100*cv['dcdc']['U_trecere_rel'], 0)} % din U_dc: trecere directă |",
+        f"| D ridicător | {ro(D['D_min_regl'], 2)} … {ro(D['D_max'], 4)} (nominal {ro(D['D_nom'], 3)}) | D = 1 − U_bat/U_dc; pentru U_bat > {ro(D['U_trecere'], 0)} V: trecere directă (D = 0) |",
         f"| D coborâtor (recuperare) | {ro(D['Dc_min'], 3)} … {ro(D['Dc_max'], 4)} | D_c = U_bat/U_dc |",
         f"| I_bat max (U_bat = U_min) | {ro(D['I_bat_max'], 0)} A | {D['N_faze']} faze × {ro(D['I_faza_max'], 1)} A |",
-        f"| Ondulația pe fază ΔI | {ro(D['dI'], 1)} A ({ro(100*cv['dcdc']['ondulatie_I_rel'], 0)} %) | TI SLVA372D: 20–40 % |",
+        f"| Ondulația curentului pe fază ΔI | {ro(D['dI'], 1)} A ({ro(100*cv['dcdc']['ondulatie_I_rel'], 0)} %) | TI SLVA372D: 20–40 % |",
         f"| Bobina pe fază L | **{ro(D['L']*1e6, 1)} µH** | L = U_bat·D/(ΔI·f_s), maxim la U_bat = {ro(D['U_bat_ondulatie_max'], 0)} V |",
         f"| Curentul de vârf pe fază | {ro(D['I_varf_faza'], 1)} A | I_faza + ΔI/2 |",
         f"| Condensatorul circuitului intermediar | **≥ {ro(D['C']*1e6, 0)} µF** ({math.ceil(D['C']*1e6/cd['C_uF'])} × {cd['C_uF']} µF) | C = I_dc·D_max/(ΔU·f_s), ΔU = {ro(D['dU'], 0)} V (1 %), o fază echivalentă (acoperitor) |",
@@ -184,12 +185,12 @@ def tabele(R, nr=None):
         "| Mărime | Valoare | Observații |",
         "|---|---|---|",
         f"| Rețea / putere AC | 3 × {ro(C['U_AC'], 0)} V, {ro(C['P_AC']/1e3, 0)} kW | încărcător de bord (mod 3, IEC 61851) |",
-        f"| U_dc după PFC | {ro(C['U_dc'], 0)} V | > √2·U_AC = {ro(C['U_dc_min_PFC'], 0)} V și > U_CV: {da(C['ok_U_PFC'])} |",
+        f"| U_PFC (tensiunea după PFC) | {ro(C['U_dc'], 0)} V | > √2·U_AC = {ro(C['U_dc_min_PFC'], 0)} V și > U_CV: {da(C['ok_U_PFC'])} |",
         f"| P în baterie | {ro(C['P_bat']/1e3, 2)} kW | η_PFC·η_coborâtor = {ro(cv['incarcator']['eta_PFC']*cv['incarcator']['eta_buck'], 3)} |",
         f"| Faza CC | {ro(C['I_CC'], 2)} A = {ro(C['C_rate'], 3)}C ({ro(C['I_cel_CC'], 3)} A/celulă) | I_CC = P_bat/U_CV; fișa celulei: standard 1C, maxim 5C |",
-        f"| Faza CV | {ro(C['U_CV'], 0)} V (4,2 V/celulă) | oprire la {ro(C['I_taiere'], 2)} A (50 mA/celulă, sursă S) |",
-        f"| D coborâtor | {ro(C['D_min'], 3)} … {ro(C['D_max'], 3)} | D = U_bat/U_dc |",
-        f"| Histerezis / bobină | h = {ro(C['h'], 2)} A → L = {ro(C['L']*1e6, 0)} µH | f = U_dc·D(1−D)/(h·L) ≤ {ro(cv['incarcator']['f_s_max_Hz']/1e3, 0)} kHz |",
+        f"| Faza CV | {ro(C['U_CV'], 0)} V (4,2 V/celulă) | oprire la {ro(C['I_taiere'], 2)} A (50 mA/celulă, sursă secundară) |",
+        f"| D coborâtor | {ro(C['D_min'], 3)} … {ro(C['D_max'], 3)} | D = U_bat/U_PFC |",
+        f"| Histerezis / bobină | h = {ro(C['h'], 2)} A → L = {ro(C['L']*1e6, 0)} µH | f = U_PFC·D(1−D)/(h·L) ≤ {ro(cv['incarcator']['f_s_max_Hz']/1e3, 0)} kHz |",
         f"| Baterie (model) | R = {ro(C['R_bat']*1e3, 1)} mΩ, OCV {ro(C['U_0'], 0)}…{ro(C['U_CV'], 0)} V, C_eq = {ro(C['C_eq'], 0)} F, τ_CV = {ro(C['tau_CV'], 0)} s | OCV liniar, medie = U_nom |",
         f"| Durata (analitic) de la SOC = {ro(100*C['SOC0'], 0)} % | CC {ro(C['t_CC']/3600, 2)} h + CV {ro(C['t_CV']/60, 1)} min = {ro(C['t_total']/3600, 2)} h | – |",
     ])
@@ -202,15 +203,29 @@ def tabele(R, nr=None):
         f"din rețea {ro(Im['E_AC']/3.6e6, 2)} kWh, în baterie {ro(Im['E_bat']/3.6e6, 2)} kWh, stocat {ro(Im['E_stocata']/3.6e6, 2)} kWh | "
         f"analitic: {ro(C['t_CC']/3600, 2)} h / {ro(C['t_total']/3600, 2)} h |",
         f"| Încărcător cu comutație (timp scalat 1:{sc['incarcare']['k_timp']}) | trecere CC → CV la {ro(Ic['t_CC']*1e3, 2)} ms; I la t_CC + τ = {ro(Ic['I_med_tau'], 2)} A; "
-        f"f în CC = {ro(Ic['f_CC']/1e3, 1)} kHz; oprire (I < {ro(C['I_taiere'], 2)} A) la {ro(Ic['t_stop']*1e3, 1)} ms | model mediu: {ro(sc['incarcare']['t_CC_s']*1e3, 0)} ms; "
+        f"f în CC = {ro(Ic['f_CC']/1e3, 1)} kHz; oprire (I < {ro(C['I_taiere'], 2)} A) la {ro(Ic['t_stop']*1e3, 1)} ms | model mediu: {ro(sc['incarcare']['t_CC_s']*1e3, 0)} ms (impus prin OCV inițial); "
         f"{ro(Ic['I_med_tau_teoretic'], 2)} A; {ro(Ic['f_CC_teoretic']/1e3, 1)} kHz; oprire la {ro(Ic['t_stop_teoretic']*1e3, 1)} ms |",
         f"| DC-DC cu comutație – tracțiune ({ro(D['P_dc_max']/1e3, 0)} kW) | I_bat = {ro(tr['I_bat_med'], 0)} A, U_bat = {ro(tr['U_bat_med'], 1)} V, D = {ro(tr['D_med'], 4)}, "
-        f"U_dc = {ro(tr['U_dc_med'], 2)} V; ΔI faza {ro(tr['dI_faza'], 1)} A, ΔI_bat {ro(tr['dI_bat'], 1)} A, ΔU_dc {ro(tr['dU_dc'], 2)} V | "
-        f"D = {ro(tr['D_teoretic'], 4)}; ΔI faza = {ro(tr['dI_faza_teoretic'], 1)} A; ΔU_dc ≤ {ro(D['dU'], 0)} V |",
+        f"U_dc = {ro(tr['U_dc_med'], 2)} V; ΔI pe fază {ro(tr['dI_faza'], 1)} A, ΔI_bat {ro(tr['dI_bat'], 1)} A, ΔU_dc {ro(tr['dU_dc'], 2)} V | "
+        f"D = {ro(tr['D_teoretic'], 4)}; ΔI pe fază = {ro(tr['dI_faza_teoretic'], 1)} A; ΔU_dc ≤ {ro(D['dU'], 0)} V |",
         f"| DC-DC cu comutație – recuperare ({ro(sc['dcdc']['P_franare_rel']*D['P_dc_max']/1e3, 0)} kW) | I_bat = {ro(rec['I_bat_med'], 0)} A, U_bat = {ro(rec['U_bat_med'], 1)} V, D = {ro(rec['D_med'], 4)}, "
-        f"U_dc = {ro(rec['U_dc_med'], 2)} V; ΔI faza {ro(rec['dI_faza'], 1)} A | D = {ro(rec['D_teoretic'], 4)}; ΔI faza = {ro(rec['dI_faza_teoretic'], 1)} A |",
-        f"| DC-DC – treptele de sarcină | U_dc min {ro(Dc['U_dc_min'], 1)} V la treapta de tracțiune, max {ro(Dc['U_dc_max'], 1)} V la trecerea în recuperare | ±{ro(100*max(D['U_dc']-Dc['U_dc_min'], Dc['U_dc_max']-D['U_dc'])/D['U_dc'], 1)} % |",
+        f"U_dc = {ro(rec['U_dc_med'], 2)} V; ΔI pe fază {ro(rec['dI_faza'], 1)} A, ΔI_bat {ro(rec['dI_bat'], 1)} A | D = {ro(rec['D_teoretic'], 4)}; ΔI pe fază = {ro(rec['dI_faza_teoretic'], 1)} A |",
+        f"| DC-DC – schimbările de sarcină (pante de {ro(sc['dcdc']['t_rampa']*1e3, 0)} ms) | U_dc min {ro(Dc['U_dc_min'], 1)} V la intrarea în tracțiune, max {ro(Dc['U_dc_max'], 1)} V la trecerea în recuperare | "
+        f"{ro(100*(Dc['U_dc_min']-D['U_dc'])/D['U_dc'], 1)} % / +{ro(100*(Dc['U_dc_max']-D['U_dc'])/D['U_dc'], 1)} % |",
     ])
+    Ptr = D["P_dc_max"]
+    Pfr = sc["dcdc"]["P_franare_rel"] * Ptr
+    tb["dcdc_text"] = (
+        f"Cele {D['N_faze']} faze defazate cu T_s/{D['N_faze']} își compensează ondulațiile; efectul depinde de factorul de umplere. "
+        f"La tracțiune (D ≈ {ro(tr['D_med'], 2)}, aproape de 1/{D['N_faze']}, unde compensarea este aproape completă) ondulația "
+        f"curentului bateriei este de {ro(tr['dI_faza']/tr['dI_bat'], 1)} ori mai mică decât a unei faze ({ro(tr['dI_bat'], 1)} A față de "
+        f"{ro(tr['dI_faza'], 1)} A); la recuperare (D ≈ {ro(rec['D_med'], 2)}) reducerea este mai mică ({ro(rec['dI_bat'], 1)} A față de "
+        f"{ro(rec['dI_faza'], 1)} A). Ondulația tensiunii circuitului intermediar ({ro(tr['dU_dc'], 2)} V, respectiv {ro(rec['dU_dc'], 2)} V) "
+        f"este mult sub cele {ro(D['dU'], 0)} V ale calculului acoperitor cu o singură fază (în simulare sarcina este ideală, fără "
+        f"ondulația de curent a invertoarelor). Puterea sarcinii trece de la 0 la {ro(Ptr/1e3, 0)} kW și apoi la −{ro(Pfr/1e3, 0)} kW "
+        f"(o schimbare de {ro((Ptr+Pfr)/1e3, 0)} kW) cu pante de {ro(sc['dcdc']['t_rampa']*1e3, 0)} ms; tensiunea circuitului intermediar "
+        f"rămâne între {ro(Dc['U_dc_min'], 1)} V și {ro(Dc['U_dc_max'], 1)} V – vârful depășește cu {ro(100*(Dc['U_dc_max']/D['U_dc']-1), 1)} % "
+        "tensiunea maximă din domeniul de aplicare al motoarelor (800 V), timp de sub 1 ms.")
     if nr:
         tb["comparatie"] = (f"Implementarea Python (python/model_p5p6.py) refăcută independent de MATLAB/Octave: {nr[0]} mărimi comparate, "
                             f"{len(nr[1])} diferențe peste toleranța relativă 10⁻⁶.")
